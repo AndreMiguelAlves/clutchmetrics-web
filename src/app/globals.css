@@ -43,11 +43,6 @@ body {
           var(--background);
 
   color: var(--text);
-  font-family:
-          var(--font-space-grotesk),
-          Arial,
-          Helvetica,
-          sans-serif;
 
   -webkit-font-smoothing: antialiased;
 }
@@ -1647,7 +1642,7 @@ a {
 .plan-card {
   padding: 20px;
 
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 .plan-pill {
@@ -2372,3 +2367,128 @@ a {
   color: #697487;
 }
 
+/* FREE PLAN — ajuste final */
+
+.plan-card {
+  margin-top: 0;
+
+  box-shadow: none;
+
+  border-color: rgba(124, 92, 255, 0.18);
+
+  background:
+          linear-gradient(
+                  145deg,
+                  rgba(124, 92, 255, 0.035),
+                  rgba(17, 20, 29, 0.96)
+          );
+}
+
+.sidebar-bottom {
+  margin-top: 0;
+  gap: 14px;
+}
+
+.sidebar > div:first-child {
+  overflow-y: visible;
+  padding-right: 0;
+}
+
+/* Separação entre Profile e Free Plan */
+
+.plan-card {
+  margin-top: 14px;
+
+  padding: 15px 16px;
+
+  box-shadow: none;
+
+  border-color: rgba(124, 92, 255, 0.18);
+}
+
+.plan-card .plan-pill {
+  margin-bottom: 12px;
+}
+
+.plan-card strong {
+  margin-bottom: 6px;
+}
+
+.plan-card p {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.plan-card button {
+  padding: 9px 10px;
+}
+
+.sidebar-bottom {
+  gap: 12px;
+}
+
+.sidebar-nav {
+  gap: 1px;
+}
+
+.nav-label-spaced {
+  margin-top: 14px;
+}
+
+/* FREE PLAN — ajuste definitivo */
+
+.sidebar-bottom {
+  background: transparent !important;
+  padding-top: 0;
+  margin-top: 0;
+  gap: 12px;
+}
+
+.plan-card {
+  margin-top: 14px;
+  box-shadow: none !important;
+}
+
+.sidebar-user {
+  background: transparent;
+}
+
+/* =========================================================
+   REAL KDA EVOLUTION CHART
+   ========================================================= */
+
+.chart-grid-line {
+  stroke: #202736;
+  stroke-width: 1;
+}
+
+.chart-point {
+  fill: #25d6f5;
+  stroke: #10151e;
+  stroke-width: 4;
+
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-dates {
+  margin-top: 10px;
+
+  display: flex;
+  justify-content: space-between;
+
+  color: #566278;
+
+  font-size: 9px;
+}
+
+.chart-empty {
+  height: 235px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #667286;
+
+  font-size: 13px;
+}

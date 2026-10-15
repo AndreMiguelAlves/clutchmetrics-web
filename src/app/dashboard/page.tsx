@@ -1,23 +1,9 @@
 "use client";
 
-import {
-    LayoutDashboard,
-        ChartNoAxesCombined,
-        Swords,
-        Gamepad2,
-        Clapperboard,
-        Radio,
-        Trophy,
-        CreditCard,
-        UserRound,
-        Search,
-        Bell,
-        ChevronDown,
-} from "lucide-react";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authenticatedFetch } from "../../lib/api";
+import AppShell from "../../components/AppShell";
 
 interface PlayerProfile {
     id: number;
@@ -45,6 +31,31 @@ interface DashboardEvolutionPoint {
     kills: number;
     deaths: number;
     assists: number;
+}
+interface MatchResponse {
+    matchId: number;
+    playerGameAccountId: number;
+    gameCode: string;
+    gameName: string;
+    nickname: string;
+    externalMatchId: string;
+    result: string;
+    playedAt: string;
+    durationSeconds: number;
+    kills: number;
+    deaths: number;
+    assists: number;
+    score: number;
+    kda: number;
+}
+interface GameAccountResponse {
+    id: number;
+    gameCode: string;
+    gameName: string;
+    nickname: string;
+    externalId: string | null;
+    region: string | null;
+    platform: string | null;
 }
 
 const matches = [
@@ -110,6 +121,10 @@ export default function Home() {
         useState<DashboardSummary | null>(null);
     const [evolution, setEvolution] =
         useState<DashboardEvolutionPoint[]>([]);
+    const [latestMatches, setLatestMatches] =
+        useState<MatchResponse[]>([]);
+    const [gameAccounts, setGameAccounts] =
+        useState<GameAccountResponse[]>([]);
 
     useEffect(() => {
         async function loadProfile() {
@@ -227,9 +242,108 @@ export default function Home() {
                 console.error(error);
             }
         }
-
         loadEvolution();
     }, []);
+    useEffect(() => {
+        async function loadLatestMatches() {
+            try {
+                const response = await authenticatedFetch(
+                    "http://localhost:8080/api/matches?gameCode=LEAGUE_OF_LEGENDS",
+                    {
+                        method: "GET",
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Não foi possível carregar os últimos jogos."
+                    );
+                }
+
+                const data: MatchResponse[] =
+                    await response.json();
+
+                setLatestMatches(data.slice(0, 3));
+            } catch (error) {
+                console.error(error);
+
+                if (
+                    error instanceof Error &&
+                    (
+                        error.message === "SESSION_EXPIRED" ||
+                        error.message === "NO_ACCESS_TOKEN"
+                    )
+                ) {
+                    router.replace("/login");
+                }
+            }
+        }
+
+        loadLatestMatches();
+    }, [router]);
+    useEffect(() => {
+        async function loadGameAccounts() {
+            try {
+                const response = await authenticatedFetch(
+                    "http://localhost:8080/api/game-accounts",
+                    {
+                        method: "GET",
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Não foi possível carregar as contas de jogo."
+                    );
+                }
+
+                const data: GameAccountResponse[] =
+                    await response.json();
+
+                setGameAccounts(data);
+            } catch (error) {
+                console.error(error);
+
+                if (
+                    error instanceof Error &&
+                    (
+                        error.message === "SESSION_EXPIRED" ||
+                        error.message === "NO_ACCESS_TOKEN"
+                    )
+                ) {
+                    router.replace("/login");
+                }
+            }
+        }
+
+        loadGameAccounts();
+    }, [router]);
+
+    function formatMatchTime(playedAt: string) {
+        const matchDate = new Date(playedAt);
+        const now = new Date();
+
+        const difference =
+            now.getTime() - matchDate.getTime();
+
+        const minutes = Math.floor(
+            difference / 60000
+        );
+
+        if (minutes < 60) {
+            return `${Math.max(minutes, 0)} min ago`;
+        }
+
+        const hours = Math.floor(minutes / 60);
+
+        if (hours < 24) {
+            return `${hours}h ago`;
+        }
+
+        const days = Math.floor(hours / 24);
+
+        return `${days}d ago`;
+    }
 
     const maxChartKda =
         evolution.length > 0
@@ -270,134 +384,7 @@ export default function Home() {
     }
 
     return (
-        <main className="app-shell">
-            <aside className="sidebar">
-                <div>
-                    <div className="brand">
-                        <div className="brand-mark">
-                            <span className="logo-c">C</span>
-                            <span className="logo-m">M</span>
-                        </div>
-
-                        <div>
-                            <strong>ClutchMetrics</strong>
-                            <span>Performance Hub</span>
-                        </div>
-                    </div>
-
-                    <nav className="sidebar-nav">
-                        <p className="nav-label">Workspace</p>
-
-                        <a className="nav-item active" href="#">
-                            <LayoutDashboard size={17} strokeWidth={1.8} />
-                            <span>Overview</span>
-                        </a>
-
-                        <a className="nav-item" href="#">
-                            <ChartNoAxesCombined size={17} strokeWidth={1.8} />
-                            <span>Analytics</span>
-                        </a>
-
-                        <a className="nav-item" href="#">
-                            <Swords size={17} strokeWidth={1.8} />
-                            <span>Matches</span>
-                        </a>
-
-                        <a className="nav-item" href="#">
-                            <Gamepad2 size={17} strokeWidth={1.8} />
-                            <span>Game Accounts</span>
-                        </a>
-
-                        <p className="nav-label nav-label-spaced">Community</p>
-
-                        <a className="nav-item" href="#">
-                            <Clapperboard size={17} strokeWidth={1.8} />
-                            <span>Clips</span>
-                        </a>
-
-                        <a className="nav-item" href="#">
-                            <Radio size={17} strokeWidth={1.8} />
-                            <span>Feed</span>
-                        </a>
-
-                        <a className="nav-item" href="#">
-                            <Trophy size={17} strokeWidth={1.8} />
-                            <span>Challenges</span>
-                        </a>
-
-                        <p className="nav-label nav-label-spaced">Account</p>
-
-                        <a className="nav-item" href="#">
-                            <CreditCard size={17} strokeWidth={1.8} />
-                            <span>Subscription</span>
-                        </a>
-
-                        <a className="nav-item" href="#">
-                            <UserRound size={17} strokeWidth={1.8} />
-                            <span>Profile</span>
-                        </a>
-                    </nav>
-                </div>
-
-                <div className="sidebar-bottom">
-                    <div className="plan-card">
-                        <span className="plan-pill">FREE PLAN</span>
-                        <strong>Unlock more analytics</strong>
-                        <p>Upgrade for unlimited insights and exports.</p>
-                        <button>View Premium</button>
-                    </div>
-
-                    <div className="sidebar-user">
-                        <div className="avatar">C</div>
-
-                        <div>
-                            <strong>
-                                {profile?.displayName ?? "player"}
-                            </strong>
-                            <span>Player</span>
-                        </div>
-
-                        <span className="user-more">•••</span>
-                    </div>
-                </div>
-            </aside>
-
-            <section className="main-content">
-                <header className="topbar">
-                    <div>
-                        <span className="topbar-eyebrow">OVERVIEW</span>
-                        <h1>Performance Dashboard</h1>
-                    </div>
-
-                    <div className="topbar-actions">
-                        <button className="topbar-tool">
-                            <Search size={17} strokeWidth={1.8} />
-                            <span>Search</span>
-                        </button>
-
-                        <button className="notification-button" aria-label="Notifications">
-                            <Bell size={17} strokeWidth={1.8} />
-                            <span className="notification-dot" />
-                        </button>
-
-                        <div className="profile-chip">
-                            <div className="avatar small-avatar">C</div>
-
-                            <div className="profile-info">
-                                <strong>
-                                    {profile?.displayName ?? "player"}
-                                </strong>
-                                <span>EUW</span>
-                            </div>
-
-                            <ChevronDown
-                                className="profile-chevron"
-                                size={15}
-                                strokeWidth={1.8}
-                            />
-                        </div>
-                    </div>
-                </header>
+        <AppShell title="Performance Dashboard">
 
                 <div className="dashboard-content">
                     <section className="welcome-row">
@@ -676,18 +663,27 @@ export default function Home() {
                                     <h3>Latest matches</h3>
                                 </div>
 
-                                <button className="ghost-button">View all</button>
+                                <button
+                                    className="ghost-button"
+                                    onClick={() => router.push("/matches")}
+                                >
+                                    View all
+                                </button>
                             </div>
-
                             <div className="matches-list">
-                                {matches.map((match, index) => (
-                                    <div className="match-row" key={index}>
+                                {latestMatches.map((match) => (
+                                    <div
+                                        className="match-row"
+                                        key={match.matchId}
+                                    >
                                         <div className="match-game">
                                             <div className="game-icon">L</div>
 
                                             <div>
-                                                <strong>{match.game}</strong>
-                                                <span>{match.time}</span>
+                                                <strong>{match.gameName}</strong>
+                                                <span>
+            {formatMatchTime(match.playedAt)}
+          </span>
                                             </div>
                                         </div>
 
@@ -695,7 +691,9 @@ export default function Home() {
                                             className={
                                                 match.result === "WIN"
                                                     ? "result win"
-                                                    : "result loss"
+                                                    : match.result === "LOSS"
+                                                        ? "result loss"
+                                                        : "result draw"
                                             }
                                         >
                       {match.result}
@@ -722,42 +720,69 @@ export default function Home() {
                                     <h3>Your games</h3>
                                 </div>
 
-                                <button className="ghost-button">Manage</button>
+                                <button
+                                    className="ghost-button"
+                                    onClick={() => router.push("/game-accounts")}
+                                >
+                                    Manage
+                                </button>
                             </div>
 
                             <div className="games-grid">
-                                {games.map((game) => (
-                                    <div className="game-card" key={game.code}>
-                                        <div className={`game-badge badge-${game.code.toLowerCase()}`}>
-                                            {game.code}
-                                        </div>
+                                {games.map((game) => {
+                                    const apiGameCode =
+                                        game.code === "LOL"
+                                            ? "LEAGUE_OF_LEGENDS"
+                                            : game.code === "VAL"
+                                                ? "VALORANT"
+                                                : game.code === "CS2"
+                                                    ? "CS2"
+                                                    : "ROCKET_LEAGUE";
 
-                                        <div>
-                                            <strong>{game.name}</strong>
-                                            <span
-                                                className={
-                                                    game.username === "Not connected"
-                                                        ? "account-status disconnected"
-                                                        : "account-status connected"
-                                                }
+                                    const account = gameAccounts.find(
+                                        (item) => item.gameCode === apiGameCode
+                                    );
+
+                                    return (
+                                        <div
+                                            className="game-card"
+                                            key={game.code}
+                                        >
+                                            <div
+                                                className={`game-badge badge-${game.code.toLowerCase()}`}
                                             >
-  {game.username}
-</span>
-                                        </div>
+                                                {game.code}
+                                            </div>
 
-                                        <span className="region">{game.region}</span>
-                                    </div>
-                                ))}
+                                            <div>
+                                                <strong>{game.name}</strong>
+
+                                                <span
+                                                    className={
+                                                        account
+                                                            ? "account-status connected"
+                                                            : "account-status disconnected"
+                                                    }
+                                                >
+          {account?.nickname ?? "Not connected"}
+        </span>
+                                            </div>
+
+                                            <span className="region">
+        {account?.region ?? "—"}
+      </span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </article>
                     </section>
                 </div>
-            </section>
 
             <button className="chat-button" aria-label="Open Clutch Assistant">
                 CM
                 <span className="chat-status" />
             </button>
-        </main>
+        </AppShell>
     );
 }

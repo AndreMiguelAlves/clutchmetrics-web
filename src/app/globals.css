@@ -3678,3 +3678,562 @@ a {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* =========================================================
+   CLIPS PAGE
+   ========================================================= */
+
+.clips-page {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+}
+
+.clips-header {
+  margin-bottom: 28px;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.clips-header h1 {
+  margin: 8px 0;
+  font-size: 36px;
+}
+
+.clips-header > div > p:last-child {
+  color: #8390a5;
+}
+
+.clips-create-button {
+  padding: 11px 18px;
+
+  background: #765cff;
+  border: 1px solid #765cff;
+  border-radius: 8px;
+
+  color: white;
+  font: inherit;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.clip-create-panel {
+  margin-bottom: 24px;
+  padding: 24px;
+
+  background: #10151e;
+  border: 1px solid #202735;
+  border-radius: 12px;
+}
+
+.clip-create-panel h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.clip-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.clip-form-grid select {
+  width: 100%;
+  padding: 12px 14px;
+
+  background: #0b1017;
+  border: 1px solid #242d3c;
+  border-radius: 8px;
+
+  color: #f4f6fb;
+  font: inherit;
+}
+
+.clip-form-grid select:focus {
+  outline: none;
+  border-color: #765cff;
+}
+
+.clip-form-full {
+  grid-column: 1 / -1;
+}
+
+.clip-form-actions {
+  margin-top: 20px;
+
+  display: flex;
+  justify-content: flex-end;
+}
+
+.clips-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.clip-card {
+  overflow: hidden;
+
+  background: #10151e;
+  border: 1px solid #202735;
+  border-radius: 12px;
+}
+
+.clip-thumbnail {
+  position: relative;
+
+  height: 210px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  background:
+          linear-gradient(
+                  135deg,
+                  rgba(118, 92, 255, 0.18),
+                  rgba(27, 34, 48, 0.3)
+          ),
+          #0b1017;
+
+  color: #9d8cff;
+
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.clip-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.clip-thumbnail small {
+  position: absolute;
+
+  right: 12px;
+  bottom: 10px;
+
+  padding: 4px 7px;
+
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 4px;
+
+  color: white;
+}
+
+.clip-card-content {
+  padding: 20px;
+}
+
+.clip-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  color: #718097;
+  font-size: 11px;
+}
+
+.clip-card-content h2 {
+  margin: 13px 0 8px;
+  font-size: 19px;
+}
+
+.clip-card-content > p {
+  min-height: 40px;
+
+  color: #8390a5;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.clip-status {
+  padding: 5px 7px;
+
+  border-radius: 5px;
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.clip-status.uploaded {
+  color: #6aa7ff;
+  background: rgba(106, 167, 255, 0.1);
+}
+
+.clip-status.processing {
+  color: #ffc857;
+  background: rgba(255, 200, 87, 0.1);
+}
+
+.clip-status.ready {
+  color: #35d98a;
+  background: rgba(53, 217, 138, 0.1);
+}
+
+.clip-status.failed {
+  color: #ff626b;
+  background: rgba(255, 98, 107, 0.1);
+}
+
+.clip-meta {
+  margin-top: 18px;
+
+  padding-top: 14px;
+
+  display: flex;
+  justify-content: space-between;
+
+  border-top: 1px solid #202735;
+
+  color: #66748b;
+  font-size: 11px;
+}
+
+@media (max-width: 850px) {
+  .clips-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clip-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clip-form-full {
+    grid-column: auto;
+  }
+}
+
+.clip-actions {
+  margin-top: 14px;
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.clip-actions button {
+  padding: 9px 14px;
+
+  background: #151b25;
+  border: 1px solid #303a4a;
+  border-radius: 7px;
+
+  color: #d9deea;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.clip-actions button:hover {
+  border-color: #765cff;
+}
+
+.clip-actions .clip-primary-action {
+  background: #765cff;
+  border-color: #765cff;
+  color: white;
+}
+
+.clip-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.clip-thumbnail-fallback {
+  position: absolute;
+
+  color: #9d8cff;
+
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.clip-thumbnail img {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+/* =========================================================
+   FEED PAGE
+   ========================================================= */
+
+.feed-page {
+  width: min(900px, 100%);
+  margin: 0 auto;
+}
+
+.feed-header {
+  margin-bottom: 30px;
+}
+
+.feed-header h1 {
+  margin: 8px 0;
+  font-size: 36px;
+}
+
+.feed-header > p:last-child {
+  color: #8390a5;
+}
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.feed-card {
+  overflow: hidden;
+
+  background: #10151e;
+  border: 1px solid #202735;
+  border-radius: 12px;
+}
+
+.feed-video {
+  position: relative;
+
+  height: 360px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  background:
+          linear-gradient(
+                  135deg,
+                  rgba(118, 92, 255, 0.2),
+                  rgba(24, 31, 45, 0.4)
+          ),
+          #0b1017;
+}
+
+.feed-video img {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.feed-video small {
+  position: absolute;
+
+  right: 14px;
+  bottom: 12px;
+
+  padding: 5px 8px;
+
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 5px;
+
+  color: white;
+}
+
+.feed-card-content {
+  padding: 22px;
+}
+
+.feed-card-meta {
+  display: flex;
+  justify-content: space-between;
+
+  color: #67758a;
+  font-size: 11px;
+}
+
+.feed-card-content h2 {
+  margin: 14px 0 8px;
+  font-size: 21px;
+}
+
+.feed-card-content > p {
+  color: #8996aa;
+  line-height: 1.6;
+}
+
+.feed-social {
+  margin-top: 18px;
+  padding-top: 15px;
+
+  display: flex;
+  gap: 24px;
+
+  border-top: 1px solid #202735;
+
+  color: #8996aa;
+  font-size: 12px;
+}
+
+.feed-like-button {
+  padding: 0;
+
+  background: transparent;
+  border: none;
+
+  color: #8996aa;
+  font: inherit;
+  font-size: 12px;
+
+  cursor: pointer;
+}
+
+.feed-like-button:hover {
+  color: #ff647c;
+}
+
+.feed-like-button.liked {
+  color: #ff647c;
+}
+
+.feed-like-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.feed-comments {
+  margin-top: 16px;
+  padding-top: 16px;
+
+  border-top: 1px solid #202735;
+}
+
+.feed-comments-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-comment {
+  padding: 14px 0;
+
+  border-bottom: 1px solid #1d2532;
+}
+
+.feed-comment > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feed-comment strong {
+  font-size: 13px;
+}
+
+.feed-comment span {
+  color: #65738a;
+  font-size: 10px;
+}
+
+.feed-comment p {
+  margin: 7px 0 0;
+
+  color: #a0aabc;
+  font-size: 13px;
+}
+
+.feed-comments-empty {
+  color: #68758a;
+  font-size: 12px;
+}
+
+.feed-comment-form {
+  margin-top: 16px;
+
+  display: flex;
+  gap: 10px;
+}
+
+.feed-comment-form input {
+  flex: 1;
+
+  padding: 11px 13px;
+
+  background: #0b1017;
+  border: 1px solid #242d3c;
+  border-radius: 8px;
+
+  color: white;
+  font: inherit;
+}
+
+.feed-comment-form input:focus {
+  outline: none;
+  border-color: #765cff;
+}
+
+.feed-comment-form button {
+  padding: 10px 18px;
+
+  background: #765cff;
+  border: 1px solid #765cff;
+  border-radius: 8px;
+
+  color: white;
+  font: inherit;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.feed-comment-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feed-comment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.feed-comment-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.feed-delete-comment {
+  padding: 5px 8px;
+
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+
+  color: #ff626b;
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.feed-delete-comment:hover {
+  background: rgba(255, 98, 107, 0.08);
+  border-color: rgba(255, 98, 107, 0.25);
+}
+
+.feed-delete-comment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

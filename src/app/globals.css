@@ -4732,3 +4732,338 @@ a {
 
   font-size: 14px;
 }
+
+/* =========================
+   ADMIN USERS
+========================= */
+
+.admin-users-page {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 40px 28px 60px;
+}
+
+.admin-users-header {
+  margin-bottom: 28px;
+}
+
+.admin-users-header h1 {
+  margin: 8px 0;
+  color: #f5f7fb;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.admin-users-header p {
+  margin: 0;
+  color: #8f9bb0;
+  font-size: 14px;
+}
+
+.admin-users-card {
+  background: #101620;
+  border: 1px solid #202938;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-users-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: #202938;
+  border-bottom: 1px solid #202938;
+}
+
+.admin-users-summary > div {
+  padding: 18px 20px;
+  background: #101620;
+}
+
+.admin-users-summary span {
+  display: block;
+  margin-bottom: 6px;
+  color: #7f8ca1;
+  font-size: 11px;
+}
+
+.admin-users-summary strong {
+  color: #f3f5f9;
+  font-size: 22px;
+}
+
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: 15px 18px;
+  text-align: left;
+  border-bottom: 1px solid #1d2633;
+}
+
+.admin-users-table th {
+  color: #77859a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.admin-users-table td {
+  color: #b8c1cf;
+  font-size: 12px;
+}
+
+.admin-users-table tbody tr:hover {
+  background: #121a25;
+}
+
+.admin-user-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-user-name strong {
+  color: #eef1f6;
+  font-size: 13px;
+}
+
+.admin-user-name span {
+  color: #657287;
+  font-size: 10px;
+}
+
+.admin-role-select {
+  min-width: 90px;
+  padding: 7px 9px;
+  background: #0b1017;
+  border: 1px solid #283244;
+  border-radius: 7px;
+  color: #dce2ec;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+}
+
+.admin-role-select:focus {
+  border-color: #7050ff;
+}
+
+.admin-role-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.admin-status.active {
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  color: #6fdb95;
+}
+
+.admin-status.disabled {
+  background: rgba(255, 98, 107, 0.08);
+  border: 1px solid rgba(255, 98, 107, 0.2);
+  color: #ff6872;
+}
+
+.admin-status-button {
+  min-width: 80px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-status-button.disable {
+  background: rgba(255, 98, 107, 0.07);
+  border: 1px solid rgba(255, 98, 107, 0.22);
+  color: #ff6872;
+}
+
+.admin-status-button.enable {
+  background: rgba(74, 222, 128, 0.07);
+  border: 1px solid rgba(74, 222, 128, 0.22);
+  color: #6fdb95;
+}
+
+.admin-status-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-access-denied,
+.admin-loading {
+  padding: 40px;
+  background: #101620;
+  border: 1px solid #202938;
+  border-radius: 12px;
+  text-align: center;
+  color: #8f9bb0;
+}
+
+.admin-access-denied h2 {
+  margin: 0 0 8px;
+  color: #f0f3f8;
+}
+
+.admin-access-denied p {
+  margin: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .admin-users-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admin-users-page {
+    padding: 28px 18px 50px;
+  }
+}
+
+/* =========================
+   AUDIT LOGS
+========================= */
+
+.audit-page {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 40px 28px 60px;
+}
+
+.audit-header {
+  margin-bottom: 28px;
+}
+
+.audit-header h1 {
+  margin: 8px 0;
+  color: #f5f7fb;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.audit-header p {
+  margin: 0;
+  color: #8f9bb0;
+  font-size: 14px;
+}
+
+.audit-card {
+  background: #101620;
+  border: 1px solid #202938;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.audit-summary {
+  padding: 18px 20px;
+  border-bottom: 1px solid #202938;
+}
+
+.audit-summary span {
+  display: block;
+  margin-bottom: 6px;
+  color: #7f8ca1;
+  font-size: 11px;
+}
+
+.audit-summary strong {
+  color: #f3f5f9;
+  font-size: 22px;
+}
+
+.audit-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.audit-table th,
+.audit-table td {
+  padding: 15px 18px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #1d2633;
+}
+
+.audit-table th {
+  color: #77859a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.audit-table td {
+  color: #b8c1cf;
+  font-size: 12px;
+}
+
+.audit-table tbody tr:hover {
+  background: #121a25;
+}
+
+.audit-user,
+.audit-entity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.audit-user strong,
+.audit-entity strong {
+  color: #eef1f6;
+  font-size: 12px;
+}
+
+.audit-user span,
+.audit-entity span {
+  color: #657287;
+  font-size: 10px;
+}
+
+.audit-action {
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 6px;
+
+  background: rgba(111, 76, 255, 0.1);
+  border: 1px solid rgba(111, 76, 255, 0.24);
+
+  color: #9b85ff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .audit-page {
+    padding: 28px 18px 50px;
+  }
+}

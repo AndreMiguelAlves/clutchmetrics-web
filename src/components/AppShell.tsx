@@ -17,6 +17,8 @@ import {
   CreditCard,
   UserRound,
   LogOut,
+  Users,
+  ScrollText,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -45,6 +47,7 @@ const menuItems = [
     href: "/game-accounts",
     icon: Gamepad2,
   },
+
 ];
 
 const communityItems = [
@@ -78,6 +81,19 @@ const accountItems = [
   },
 ];
 
+const adminItems = [
+  {
+    label: "User Management",
+    href: "/admin/users",
+    icon: Users,
+  },
+  {
+    label: "Audit Logs",
+    href: "/admin/audit-logs",
+    icon: ScrollText,
+  },
+];
+
 export default function AppShell({
   children,
   title,
@@ -88,6 +104,7 @@ export default function AppShell({
 
   const [checkingSession, setCheckingSession] =
       useState(true);
+  const [roles, setRoles] = useState<string[]>([]);
 
   useEffect(() => {
     async function verifySession() {
@@ -100,6 +117,9 @@ export default function AppShell({
           throw new Error("Invalid session");
         }
 
+        const data = await response.json();
+
+        setRoles(data.roles ?? []);
         setCheckingSession(false);
       } catch {
         localStorage.removeItem("accessToken");
@@ -195,6 +215,16 @@ export default function AppShell({
           </p>
 
           {communityItems.map(renderItem)}
+
+          {roles.includes("ADMIN") && (
+              <>
+                <p className="shared-nav-label">
+                  ADMIN
+                </p>
+
+                {adminItems.map(renderItem)}
+              </>
+          )}
 
           <p className="shared-nav-label">
             ACCOUNT

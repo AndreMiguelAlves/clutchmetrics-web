@@ -4690,3 +4690,45 @@ a {
   text-align: left;
   cursor: pointer;
 }
+
+.change-password-page {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 28px 60px;
+}
+
+.change-password-header {
+  margin-bottom: 28px;
+}
+
+.change-password-header h1 {
+  margin: 8px 0;
+  color: #f5f7fb;
+  font-size: 30px;
+}
+
+.change-password-header p {
+  margin: 0;
+  color: #8f9bb0;
+  font-size: 14px;
+}
+
+.change-password-card {
+  padding: 26px;
+  background: #101620;
+  border: 1px solid #202938;
+  border-radius: 12px;
+}
+
+.shared-session-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #080c12;
+  color: #8f9bb0;
+
+  font-size: 14px;
+}

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { authenticatedFetch } from "@/lib/api";
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -84,6 +86,32 @@ export default function AppShell({
 
   const router = useRouter();
 
+  const [checkingSession, setCheckingSession] =
+      useState(true);
+
+  useEffect(() => {
+    async function verifySession() {
+      try {
+        const response = await authenticatedFetch(
+            "http://localhost:8080/api/auth/me"
+        );
+
+        if (!response.ok) {
+          throw new Error("Invalid session");
+        }
+
+        setCheckingSession(false);
+      } catch {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+
+        router.replace("/login");
+      }
+    }
+
+    verifySession();
+  }, [router]);
+
   async function handleLogout() {
     const refreshToken =
         localStorage.getItem("refreshToken");
@@ -130,6 +158,14 @@ export default function AppShell({
 
         <span>{item.label}</span>
       </Link>
+    );
+  }
+
+  if (checkingSession) {
+    return (
+        <main className="shared-session-loading">
+          Loading...
+        </main>
     );
   }
 

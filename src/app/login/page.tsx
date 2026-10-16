@@ -13,6 +13,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import styles from "./login.module.css";
+import Link from "next/link";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -203,7 +204,11 @@ export default function LoginPage() {
                                     Password
                                 </label>
 
-                                <button type="button">
+                                <button
+                                    type="button"
+                                    className={styles.forgotPassword}
+                                    onClick={() => router.push("/forgot-password")}
+                                >
                                     Forgot password?
                                 </button>
                             </div>
@@ -272,7 +277,6 @@ export default function LoginPage() {
                             )}
                         </button>
                     </form>
-
                     <div className={styles.separator}>
                         <span />
                         <p>NEW TO CLUTCHMETRICS?</p>

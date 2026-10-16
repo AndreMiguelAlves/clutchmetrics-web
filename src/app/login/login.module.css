@@ -683,3 +683,23 @@
         font-size: 16px;
     }
 }
+
+.forgotPassword {
+    padding: 0;
+    margin: 0;
+
+    background: transparent;
+    border: none;
+
+    color: #8f7cff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.forgotPassword:hover {
+    color: #a997ff;
+    text-decoration: underline;
+}

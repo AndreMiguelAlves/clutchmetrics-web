@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   LayoutDashboard,
@@ -14,6 +14,7 @@ import {
   Trophy,
   CreditCard,
   UserRound,
+  LogOut,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -81,6 +82,38 @@ export default function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
 
+  const router = useRouter();
+
+  async function handleLogout() {
+    const refreshToken =
+        localStorage.getItem("refreshToken");
+
+    try {
+      if (refreshToken) {
+        await fetch(
+            "http://localhost:8080/api/auth/logout",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                refreshToken,
+              }),
+            }
+        );
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+
+      router.push("/login");
+      router.refresh();
+    }
+  }
+
   function renderItem(item: (typeof menuItems)[number]) {
     const Icon = item.icon;
     const active = pathname === item.href;
@@ -132,6 +165,20 @@ export default function AppShell({
           </p>
 
           {accountItems.map(renderItem)}
+
+          <button
+              type="button"
+              className="shared-nav-item shared-logout-button"
+              onClick={handleLogout}
+          >
+            <LogOut
+                size={18}
+                strokeWidth={1.8}
+            />
+
+            <span>Logout</span>
+          </button>
+
         </nav>
 
         <div className="shared-sidebar-bottom">

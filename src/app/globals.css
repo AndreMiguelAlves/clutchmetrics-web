@@ -4682,3 +4682,11 @@ a {
     padding: 26px 20px;
   }
 }
+
+.shared-logout-button {
+  width: 100%;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}

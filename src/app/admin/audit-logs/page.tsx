@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { authenticatedFetch } from "@/lib/api";
 
@@ -29,13 +29,11 @@ export default function AuditLogsPage() {
     const [accessDenied, setAccessDenied] =
         useState(false);
 
-    useEffect(() => {
-        loadLogs();
-    }, []);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [actionFilter, setActionFilter] = useState("ALL");
+    const [entityFilter, setEntityFilter] = useState("ALL");
 
-    async function loadLogs() {
-        setLoading(true);
-        setError("");
+    const loadLogs = useCallback(async () => {
 
         try {
             const response =
@@ -69,7 +67,11 @@ export default function AuditLogsPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
+
+    useEffect(() => {
+        Promise.resolve().then(() => loadLogs());
+    }, [loadLogs]);
 
     function formatDate(value: string) {
         return new Date(value).toLocaleString(
@@ -83,6 +85,29 @@ export default function AuditLogsPage() {
             }
         );
     }
+
+    const filteredLogs = logs.filter((log) => {
+        const search = searchTerm.toLowerCase();
+
+        const matchesSearch =
+            log.username.toLowerCase().includes(search) ||
+            log.email.toLowerCase().includes(search) ||
+            log.description.toLowerCase().includes(search);
+
+        const matchesAction =
+            actionFilter === "ALL" ||
+            log.action === actionFilter;
+
+        const matchesEntity =
+            entityFilter === "ALL" ||
+            log.entityType === entityFilter;
+
+        return (
+            matchesSearch &&
+            matchesAction &&
+            matchesEntity
+        );
+    });
 
     return (
         <AppShell title="Audit Logs">
@@ -125,9 +150,49 @@ export default function AuditLogsPage() {
                     </div>
                 ) : (
                     <div className="audit-card">
+                        <div className="audit-log-filters">
+                            <input
+                                type="text"
+                                placeholder="Search user, email or description..."
+                                value={searchTerm}
+                                onChange={(event) =>
+                                    setSearchTerm(event.target.value)
+                                }
+                            />
+
+                            <select
+                                value={actionFilter}
+                                onChange={(event) =>
+                                    setActionFilter(event.target.value)
+                                }
+                            >
+                                <option value="ALL">All actions</option>
+                                <option value="USER_ROLES_CHANGED">User roles changed</option>
+                                <option value="USER_STATUS_CHANGED">User status changed</option>
+                                <option value="PASSWORD_CHANGED">Password changed</option>
+                                <option value="SUBSCRIPTION_CHANGED">Subscription changed</option>
+                                <option value="CLIP_PUBLISHED">Clip published</option>
+                                <option value="CHALLENGE_JOINED">Challenge joined</option>
+                            </select>
+
+                            <select
+                                value={entityFilter}
+                                onChange={(event) =>
+                                    setEntityFilter(event.target.value)
+                                }
+                            >
+                                <option value="ALL">All entities</option>
+                                <option value="User">User</option>
+                                <option value="Subscription">Subscription</option>
+                                <option value="Clip">Clip</option>
+                                <option value="Challenge">Challenge</option>
+                            </select>
+                        </div>
                         <div className="audit-summary">
-                            <span>Total audit events</span>
-                            <strong>{logs.length}</strong>
+                            <span>Audit events</span>
+                            <strong>
+                                {filteredLogs.length} of {logs.length}
+                            </strong>
                         </div>
 
                         <div className="audit-table-wrapper">
@@ -143,7 +208,7 @@ export default function AuditLogsPage() {
                                 </thead>
 
                                 <tbody>
-                                {logs.map((log) => (
+                                {filteredLogs.map((log) => (
                                     <tr key={log.id}>
                                         <td>
                                             {formatDate(

@@ -140,6 +140,10 @@ export default function Home() {
         useState<GameAccountResponse[]>([]);
     const [subscription, setSubscription] =
         useState<SubscriptionResponse | null>(null);
+    const [selectedGame, setSelectedGame] = useState(
+        "LEAGUE_OF_LEGENDS"
+    );
+    const [selectedDays, setSelectedDays] = useState("30");
 
     useEffect(() => {
         async function loadProfile() {
@@ -200,9 +204,14 @@ export default function Home() {
                 return;
             }
 
+            const daysParam =
+                selectedDays === "ALL"
+                    ? ""
+                    : `&days=${selectedDays}`;
+
             try {
                 const response = await authenticatedFetch(
-                    "http://localhost:8080/api/dashboard/summary?gameCode=LEAGUE_OF_LEGENDS",
+                    `http://localhost:8080/api/dashboard/summary?gameCode=${selectedGame}${daysParam}`,
                     {
                         method: "GET",
                     }
@@ -224,7 +233,7 @@ export default function Home() {
         }
 
         loadDashboardSummary();
-    }, []);
+    }, [selectedGame, selectedDays]);
 
     useEffect(() => {
         async function loadEvolution() {
@@ -235,9 +244,14 @@ export default function Home() {
                 return;
             }
 
+            const daysParam =
+                selectedDays === "ALL"
+                    ? ""
+                    : `&days=${selectedDays}`;
+
             try {
                 const response = await authenticatedFetch(
-                    "http://localhost:8080/api/dashboard/evolution?gameCode=LEAGUE_OF_LEGENDS&limit=10",
+                    `http://localhost:8080/api/dashboard/evolution?gameCode=${selectedGame}&limit=10${daysParam}`,
                     {
                         method: "GET",
                     }
@@ -258,7 +272,7 @@ export default function Home() {
             }
         }
         loadEvolution();
-    }, []);
+    }, [selectedGame, selectedDays]);
     useEffect(() => {
         async function loadLatestMatches() {
             try {
@@ -278,7 +292,25 @@ export default function Home() {
                 const data: MatchResponse[] =
                     await response.json();
 
-                setLatestMatches(data.slice(0, 3));
+                const gameMatches = data.filter(
+                    (match) => match.gameCode === selectedGame
+                );
+
+                const filteredMatches =
+                    selectedDays === "ALL"
+                        ? gameMatches
+                        : gameMatches.filter((match) => {
+                            const matchDate = new Date(match.playedAt);
+                            const cutoffDate = new Date();
+
+                            cutoffDate.setDate(
+                                cutoffDate.getDate() - Number(selectedDays)
+                            );
+
+                            return matchDate >= cutoffDate;
+                        });
+
+                setLatestMatches(filteredMatches.slice(0, 3));
             } catch (error) {
                 console.error(error);
 
@@ -295,12 +327,12 @@ export default function Home() {
         }
 
         loadLatestMatches();
-    }, [router]);
+    }, [router, selectedGame, selectedDays]);
     useEffect(() => {
         async function loadGameAccounts() {
             try {
                 const response = await authenticatedFetch(
-                    "http://localhost:8080/api/game-accounts",
+                    `http://localhost:8080/api/matches?gameCode=${selectedGame}`,
                     {
                         method: "GET",
                     }
@@ -443,16 +475,49 @@ export default function Home() {
                             </p>
                         </div>
 
-                        <div className="filters">
-                            <button className="filter-button">
+                        <div className="filters"><select
+                            className="filter-button"
+                            value={selectedGame}
+                            onChange={(event) =>
+                                setSelectedGame(event.target.value)
+                            }
+                        >
+                            <option value="LEAGUE_OF_LEGENDS">
                                 League of Legends
-                                <span>⌄</span>
-                            </button>
+                            </option>
 
-                            <button className="filter-button">
-                                Last 30 days
-                                <span>⌄</span>
-                            </button>
+                            <option value="VALORANT">
+                                Valorant
+                            </option>
+
+                            <option value="CS2">
+                                Counter-Strike 2
+                            </option>
+
+                            <option value="ROCKET_LEAGUE">
+                                Rocket League
+                            </option>
+                        </select>
+
+                            <select
+                                className="filter-button"
+                                value={selectedDays}
+                                onChange={(event) =>
+                                    setSelectedDays(event.target.value)
+                                }
+                            >
+                                <option value="7">
+                                    Last 7 days
+                                </option>
+
+                                <option value="30">
+                                    Last 30 days
+                                </option>
+
+                                <option value="ALL">
+                                    All time
+                                </option>
+                            </select>
                         </div>
                     </section>
 
@@ -488,7 +553,11 @@ export default function Home() {
                         <article className="metric-card">
                             <div className="metric-top">
                                 <span>MATCHES</span>
-                                <span className="neutral-badge">30D</span>
+                                <span>
+  {selectedDays === "ALL"
+      ? "ALL"
+      : `${selectedDays}D`}
+</span>
                             </div>
 
                             <strong className="metric-number">{summary?.totalMatches ?? "—"}</strong>
@@ -740,7 +809,12 @@ export default function Home() {
                                 </button>
                             </div>
                             <div className="matches-list">
-                                {latestMatches.map((match) => (
+                                {latestMatches.length === 0 ? (
+                                    <div className="latest-matches-empty">
+                                        <p>No recent matches for the selected filters.</p>
+                                    </div>
+                                ) : (
+                                    latestMatches.map((match) => (
                                     <div
                                         className="match-row"
                                         key={match.matchId}
@@ -778,7 +852,8 @@ export default function Home() {
                                             <strong>{match.score}</strong>
                                         </div>
                                     </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         </article>
 

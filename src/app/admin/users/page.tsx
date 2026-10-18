@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { authenticatedFetch } from "@/lib/api";
 
@@ -19,22 +19,17 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [updatingUserId, setUpdatingUserId] =
     useState<number | null>(null);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [error, setError] = useState("");
   const [accessDenied, setAccessDenied] =
     useState(false);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  async function loadUsers() {
-    setLoading(true);
-    setError("");
-
+  const loadUsers = useCallback(async () => {
     try {
       const response = await authenticatedFetch(
-        "http://localhost:8080/api/admin/users"
+          "http://localhost:8080/api/admin/users"
       );
 
       if (response.status === 403) {
@@ -43,27 +38,32 @@ export default function AdminUsersPage() {
       }
 
       if (!response.ok) {
-        throw new Error(
-          "Could not load users."
-        );
+        throw new Error("Could not load users.");
       }
 
       const data: AdminUserResponse[] =
-        await response.json();
+          await response.json();
 
+      setAccessDenied(false);
+      setError("");
       setUsers(data);
     } catch (error) {
       console.error(error);
 
       setError(
-        error instanceof Error
-          ? error.message
-          : "Could not load users."
+          error instanceof Error
+              ? error.message
+              : "Could not load users."
       );
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    Promise.resolve().then(() => loadUsers());
+  }, [loadUsers]);
+
 
   async function handleStatusChange(
     user: AdminUserResponse
@@ -185,6 +185,26 @@ export default function AdminUsersPage() {
     );
   }
 
+  const filteredUsers = users.filter((user) => {
+    const search = searchTerm.toLowerCase();
+
+    const matchesSearch =
+        user.username.toLowerCase().includes(search) ||
+        user.email.toLowerCase().includes(search);
+
+    const matchesRole =
+        roleFilter === "ALL" ||
+        user.roles.includes(roleFilter);
+
+    const matchesStatus =
+        statusFilter === "ALL" ||
+        (statusFilter === "ACTIVE" && user.enabled) ||
+        (statusFilter === "DISABLED" && !user.enabled);
+
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+
   return (
     <AppShell title="Admin">
       <div className="admin-users-page">
@@ -222,6 +242,32 @@ export default function AdminUsersPage() {
           </div>
         ) : (
           <div className="admin-users-card">
+            <div className="admin-user-filters">
+              <input
+                  type="text"
+                  placeholder="Search by username or email..."
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+              />
+
+              <select
+                  value={roleFilter}
+                  onChange={(event) => setRoleFilter(event.target.value)}
+              >
+                <option value="ALL">All roles</option>
+                <option value="USER">User</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+
+              <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="ALL">All statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="DISABLED">Disabled</option>
+              </select>
+            </div>
             <div className="admin-users-summary">
               <div>
                 <span>Total users</span>
@@ -278,7 +324,7 @@ export default function AdminUsersPage() {
                 </thead>
 
                 <tbody>
-                  {users.map((user) => (
+                {filteredUsers.map((user) => (
                     <tr key={user.id}>
                       <td>
                         <div className="admin-user-name">

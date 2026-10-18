@@ -3055,7 +3055,7 @@ a {
 
 .analytics-stat-card span {
   color: #65738a;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.2px;
 }
@@ -3100,7 +3100,7 @@ a {
 .analytics-kda-grid span,
 .analytics-evolution-row small {
   color: #65738a;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -5388,3 +5388,429 @@ a {
     align-items: flex-start;
   }
 }
+
+/* =========================
+   FINAL TYPOGRAPHY POLISH
+========================= */
+
+/* Sidebar */
+.shared-nav-label {
+  font-size: 10px;
+  letter-spacing: 1.6px;
+}
+
+.shared-nav-item {
+  font-size: 14px;
+}
+
+/* Pequenos títulos acima das páginas */
+.page-eyebrow {
+  font-size: 11px;
+}
+
+/* Challenges */
+.challenge-game {
+  font-size: 13px;
+}
+
+.challenge-status {
+  font-size: 11px;
+}
+
+.challenge-description {
+  font-size: 14px;
+}
+
+.challenge-sponsor span {
+  font-size: 10px;
+}
+
+.challenge-sponsor strong {
+  font-size: 14px;
+}
+
+.challenge-info-grid span {
+  font-size: 11px;
+}
+
+.challenge-info-grid strong {
+  font-size: 13px;
+}
+
+.challenge-dates {
+  font-size: 12px;
+}
+
+.challenge-progress-header {
+  font-size: 12px;
+}
+
+.challenge-progress-percent {
+  font-size: 11px;
+}
+
+/* Admin */
+.admin-users-summary span,
+.audit-summary span {
+  font-size: 12px;
+}
+
+.admin-users-table th,
+.audit-table th {
+  font-size: 11px;
+}
+
+.admin-users-table td,
+.audit-table td {
+  font-size: 13px;
+}
+
+.admin-user-name strong,
+.audit-user strong,
+.audit-entity strong {
+  font-size: 13px;
+}
+
+.admin-user-name span,
+.audit-user span,
+.audit-entity span {
+  font-size: 11px;
+}
+
+.admin-status,
+.audit-action {
+  font-size: 11px;
+}
+
+.admin-role-select,
+.admin-status-button {
+  font-size: 12px;
+}
+
+/* Chat */
+.chat-widget-agent strong {
+  font-size: 14px;
+}
+
+.chat-widget-agent span {
+  font-size: 12px;
+}
+
+.chat-message-bubble {
+  font-size: 13px;
+}
+
+.chat-message-time {
+  font-size: 10px;
+}
+
+.chat-widget-form input {
+  font-size: 13px;
+}
+
+/* Premium banner */
+.dashboard-premium-badge {
+  font-size: 11px;
+}
+
+.dashboard-premium-content p {
+  font-size: 14px;
+}
+
+/* =========================
+   DASHBOARD TEXT SIZE FIX
+========================= */
+
+.dashboard-content .eyebrow {
+  font-size: 12px;
+  letter-spacing: 1.8px;
+}
+
+/* Sponsored Challenge */
+.challenge-brand span {
+  font-size: 11px;
+  letter-spacing: 1.2px;
+}
+
+.challenge-brand strong {
+  font-size: 13px;
+}
+
+/* Footer do challenge */
+.challenge-footer span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.challenge-footer button {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 13px;
+}
+
+/* =========================
+   FINAL SMALL TEXT FIXES
+========================= */
+
+/* Topbar */
+.shared-topbar > div > span {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+}
+
+.shared-topbar > div > strong {
+  font-size: 16px;
+}
+
+/* Logo / brand da sidebar */
+.shared-brand > div:last-child > strong {
+  font-size: 18px;
+}
+
+.shared-brand > div:last-child > span {
+  font-size: 9px;
+  letter-spacing: 1.4px;
+}
+
+/* Sponsored Challenge */
+.challenge-panel .game-tag {
+  font-size: 12px;
+}
+
+.challenge-panel h3 {
+  font-size: 22px;
+}
+
+.challenge-panel p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Textos pequenos dentro das caixas do challenge */
+.challenge-panel small,
+.challenge-panel label {
+  font-size: 14px;
+}
+
+/* Challenge progress */
+.progress-label span {
+  font-size: 12px;
+}
+
+.progress-label strong {
+  font-size: 12px;
+}
+
+/* Challenge reward */
+.reward-box > span {
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.reward-box > strong {
+  font-size: 13px;
+}
+
+/* =========================
+   DASHBOARD METRICS TEXT
+========================= */
+
+.metric-top > span:first-child {
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.metric-top .trend {
+  font-size: 11px;
+}
+
+.metric-card > p {
+  font-size: 13px;
+}
+
+
+/* =========================
+   FEED TEXT SIZE
+========================= */
+
+.feed-page .page-eyebrow {
+  font-size: 14px;
+}
+
+.feed-card-meta span {
+  font-size: 14px;
+}
+
+.feed-card-content > p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.feed-like-button,
+.feed-comment-button {
+  font-size: 16px;
+}
+
+.feed-social-icon {
+  font-size: 16px;
+}
+
+.challenge-sponsor span {
+  font-size: 14px;
+}
+
+.challenge-info-grid span {
+  font-size: 15px;
+}
+
+.challenge-dates {
+  font-size: 16px;
+}
+
+/* ADMIN FINAL READABILITY */
+
+.admin-users-table th,
+.audit-table th {
+  font-size: 12px;
+}
+
+.admin-users-summary span,
+.audit-summary span {
+  font-size: 13px;
+}
+
+.admin-user-name span,
+.audit-user span,
+.audit-entity span {
+  font-size: 12px;
+}
+
+.audit-table td {
+  font-size: 13px;
+}
+
+.audit-action {
+  font-size: 11px;
+}
+
+/* SUBSCRIPTION - CURRENT PLAN */
+
+.subscription-current > div > span {
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.subscription-active,
+.subscription-inactive {
+  font-size: 14px;
+}
+
+/* SUBSCRIPTION - PLAN DETAILS */
+
+.subscription-details-grid > div > span {
+  font-size: 14px;
+}
+
+.subscription-details-grid > div > strong {
+  font-size: 16px;
+}
+
+.latest-matches-empty {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.latest-matches-empty p {
+  margin: 0;
+  color: #7f8ba0;
+  font-size: 14px;
+}
+
+/* =========================
+   ADMIN USER FILTERS
+========================= */
+
+.admin-user-filters {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 180px 180px;
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.admin-user-filters input,
+.admin-user-filters select {
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+
+  background: #0c121b;
+  border: 1px solid #263142;
+  border-radius: 8px;
+
+  color: #e8edf5;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.admin-user-filters input::placeholder {
+  color: #68778e;
+}
+
+.admin-user-filters input:focus,
+.admin-user-filters select:focus {
+  border-color: #6f4cff;
+}
+
+@media (max-width: 900px) {
+  .admin-user-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   AUDIT LOG FILTERS
+========================= */
+
+.audit-log-filters {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 220px 190px;
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.audit-log-filters input,
+.audit-log-filters select {
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+
+  background: #0c121b;
+  border: 1px solid #263142;
+  border-radius: 8px;
+
+  color: #e8edf5;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.audit-log-filters input::placeholder {
+  color: #68778e;
+}
+
+.audit-log-filters input:focus,
+.audit-log-filters select:focus {
+  border-color: #6f4cff;
+}
+
+@media (max-width: 900px) {
+  .audit-log-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+

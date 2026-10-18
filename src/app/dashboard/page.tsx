@@ -778,11 +778,6 @@ export default function Home() {
                         </article>
                     </section>
                 </div>
-
-            <button className="chat-button" aria-label="Open Clutch Assistant">
-                CM
-                <span className="chat-status" />
-            </button>
         </AppShell>
     );
 }

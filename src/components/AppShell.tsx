@@ -5,6 +5,7 @@ import { authenticatedFetch } from "@/lib/api";
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import ChatWidget from "@/components/ChatWidget";
 
 import {
   LayoutDashboard,
@@ -279,6 +280,7 @@ export default function AppShell({
           {children}
         </div>
       </section>
+      <ChatWidget />
     </main>
   );
 }

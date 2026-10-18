@@ -210,14 +210,29 @@ export default function GameAccountsPage() {
                                     item.gameCode === game.code
                             );
 
+                            const gameImage =
+                                game.code === "LEAGUE_OF_LEGENDS"
+                                    ? "/games/lol.png"
+                                    : game.code === "VALORANT"
+                                        ? "/games/valorant.png"
+                                        : game.code === "CS2"
+                                            ? "/games/cs2.png"
+                                            : "/games/rocket-league.png";
+
                             return (
                                 <article
                                     className="account-page-card"
                                     key={game.code}
                                 >
                                     <div className="account-page-game">
-                                        <div className="game-icon">
-                                            {game.shortCode}
+                                        <div
+                                            className={`game-icon game-badge-image game-logo-${game.shortCode.toLowerCase()}`}
+                                        >
+                                            <img
+                                                src={gameImage}
+                                                alt={`${game.name} logo`}
+                                                className="game-logo-image"
+                                            />
                                         </div>
 
                                         <div>

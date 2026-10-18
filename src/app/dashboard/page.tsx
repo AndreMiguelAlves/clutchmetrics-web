@@ -820,7 +820,21 @@ export default function Home() {
                                         key={match.matchId}
                                     >
                                         <div className="match-game">
-                                            <div className="game-icon">L</div>
+                                            <div className="game-icon game-badge-image">
+                                                <img
+                                                    src={
+                                                        match.gameCode === "LEAGUE_OF_LEGENDS"
+                                                            ? "/games/lol.png"
+                                                            : match.gameCode === "VALORANT"
+                                                                ? "/games/valorant.png"
+                                                                : match.gameCode === "CS2"
+                                                                    ? "/games/cs2.png"
+                                                                    : "/games/rocket-league.png"
+                                                    }
+                                                    alt={`${match.gameName} logo`}
+                                                    className="game-logo-image"
+                                                />
+                                            </div>
 
                                             <div>
                                                 <strong>{match.gameName}</strong>
@@ -887,15 +901,28 @@ export default function Home() {
                                         (item) => item.gameCode === apiGameCode
                                     );
 
+                                    const gameImage =
+                                        game.code === "LOL"
+                                            ? "/games/lol.png"
+                                            : game.code === "VAL"
+                                                ? "/games/valorant.png"
+                                                : game.code === "CS2"
+                                                    ? "/games/cs2.png"
+                                                    : "/games/rocket-league.png";
+
                                     return (
                                         <div
                                             className="game-card"
                                             key={game.code}
                                         >
                                             <div
-                                                className={`game-badge badge-${game.code.toLowerCase()}`}
+                                                className={`game-badge game-badge-image game-logo-${game.code.toLowerCase()}`}
                                             >
-                                                {game.code}
+                                                <img
+                                                    src={gameImage}
+                                                    alt={`${game.name} logo`}
+                                                    className="game-logo-image"
+                                                />
                                             </div>
 
                                             <div>

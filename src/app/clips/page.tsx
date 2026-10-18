@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import AppShell from "../../components/AppShell";
 import { authenticatedFetch } from "../../lib/api";
 
+const clipGameImages: Record<string, string> = {
+    "League of Legends": "/games/lol.png",
+    Valorant: "/games/valorant.png",
+    "Counter-Strike 2": "/games/cs2.png",
+    "Rocket League": "/games/rocket-league.png",
+};
+
 interface ClipResponse {
     id: number;
     gameCode: string | null;
@@ -505,10 +512,17 @@ export default function ClipsPage() {
 
                                 <div className="clip-card-content">
                                     <div className="clip-card-top">
-                    <span>
-                      {clip.gameName ??
-                          "No game"}
-                    </span>
+                    <span className="clip-game-label">
+  {clipGameImages[clip.gameName ?? ""] && (
+      <img
+          src={clipGameImages[clip.gameName ?? ""]}
+          alt={`${clip.gameName} logo`}
+          className="clip-game-logo"
+      />
+  )}
+
+                        {clip.gameName ?? "No game"}
+</span>
 
                                         <span
                                             className={`clip-status ${clip.status.toLowerCase()}`}

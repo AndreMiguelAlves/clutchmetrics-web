@@ -6,6 +6,7 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import ChatWidget from "@/components/ChatWidget";
+import Image from "next/image";
 
 import {
   LayoutDashboard,
@@ -201,7 +202,13 @@ export default function AppShell({
       <aside className="shared-sidebar">
         <div className="shared-brand">
           <div className="shared-brand-mark">
-            CM
+            <Image
+                src="/clutchmetrics-icon.png"
+                alt="ClutchMetrics"
+                width={46}
+                height={46}
+                className="shared-brand-logo"
+            />
           </div>
 
           <div>

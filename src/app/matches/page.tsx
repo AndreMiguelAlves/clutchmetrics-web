@@ -197,16 +197,20 @@ export default function MatchesPage() {
                                 key={match.matchId}
                             >
                                 <div className="matches-history-game">
-                                    <div className="game-icon">
-                                        {match.gameCode ===
-                                        "LEAGUE_OF_LEGENDS"
-                                            ? "L"
-                                            : match.gameCode ===
-                                            "VALORANT"
-                                                ? "VAL"
-                                                : match.gameCode === "CS2"
-                                                    ? "CS2"
-                                                    : "RL"}
+                                    <div className="game-icon game-badge-image">
+                                        <img
+                                            src={
+                                                match.gameCode === "LEAGUE_OF_LEGENDS"
+                                                    ? "/games/lol.png"
+                                                    : match.gameCode === "VALORANT"
+                                                        ? "/games/valorant.png"
+                                                        : match.gameCode === "CS2"
+                                                            ? "/games/cs2.png"
+                                                            : "/games/rocket-league.png"
+                                            }
+                                            alt={`${match.gameName} logo`}
+                                            className="game-logo-image"
+                                        />
                                     </div>
 
                                     <div>

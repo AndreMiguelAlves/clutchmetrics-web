@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import AppShell from "../../components/AppShell";
 import { authenticatedFetch } from "../../lib/api";
 
+const feedGameImages: Record<string, string> = {
+    "League of Legends": "/games/lol.png",
+    Valorant: "/games/valorant.png",
+    "Counter-Strike 2": "/games/cs2.png",
+    "Rocket League": "/games/rocket-league.png",
+};
+
 interface ClipResponse {
     id: number;
     gameCode: string | null;
@@ -36,6 +43,9 @@ export default function FeedPage() {
     const [clips, setClips] =
         useState<ClipResponse[]>([]);
 
+    const [selectedClipId, setSelectedClipId] =
+        useState<number | null>(null);
+
     const [loading, setLoading] =
         useState(true);
 
@@ -59,6 +69,41 @@ export default function FeedPage() {
         useState(false);
     const [deletingCommentId, setDeletingCommentId] =
         useState<number | null>(null);
+
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedGame, setSelectedGame] = useState("ALL");
+
+    const feedGames = [
+        { label: "All clips", value: "ALL" },
+        { label: "League of Legends", value: "League of Legends" },
+        { label: "Valorant", value: "Valorant" },
+        { label: "CS2", value: "Counter-Strike 2" },
+        { label: "Rocket League", value: "Rocket League" },
+    ];
+
+    const filteredClips = clips.filter((clip) => {
+        const search = searchTerm.trim().toLowerCase();
+
+        const matchesSearch =
+            clip.title.toLowerCase().includes(search) ||
+            (clip.gameName ?? "").toLowerCase().includes(search) ||
+            (clip.description ?? "").toLowerCase().includes(search);
+
+        const matchesGame =
+            selectedGame === "ALL" ||
+            clip.gameName === selectedGame;
+
+        return matchesSearch && matchesGame;
+    });
+
+    const selectedClip =
+        filteredClips.find(
+            (clip) => clip.id === selectedClipId
+        ) ?? filteredClips[0] ?? null;
+
+    const upNextClips = filteredClips.filter(
+        (clip) => clip.id !== selectedClip?.id
+    );
 
     useEffect(() => {
         async function loadFeed() {
@@ -368,25 +413,78 @@ export default function FeedPage() {
                     </p>
                 )}
 
+                <div className="feed-discovery">
+                    <div className="feed-search-box">
+                        <input
+                            type="search"
+                            placeholder="Search clips or games..."
+                            value={searchTerm}
+                            onChange={(event) => setSearchTerm(event.target.value)}
+                        />
+                    </div>
+
+                    <div className="feed-game-filters">
+                        {feedGames.map((game) => (
+                            <button
+                                key={game.value}
+                                type="button"
+                                className={
+                                    selectedGame === game.value
+                                        ? "feed-game-filter active"
+                                        : "feed-game-filter"
+                                }
+                                onClick={() => setSelectedGame(game.value)}
+                            >
+                                {game.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="matches-empty">
                         Loading feed...
                     </div>
-                ) : clips.length === 0 ? (
+                ) : filteredClips.length === 0 ? (
                     <div className="matches-empty">
                         No public clips available yet.
                     </div>
                 ) : (
-                    <section className="feed-list">
-                        {clips.map((clip) => (
+                    <section className="feed-watch-layout">
+                        <div className="feed-list feed-watch-main">
+                            {filteredClips
+                                .filter((clip) => clip.id === selectedClip?.id)
+                                .map((clip) => (
                             <article
                                 className="feed-card"
                                 key={clip.id}
                             >
                                 <div className="feed-video">
-                  <span className="clip-thumbnail-fallback">
-                    CM
-                  </span>
+                  <span className="feed-game-poster">
+  <span
+      className="feed-game-poster-backdrop"
+      style={{
+          backgroundImage: `url(${
+              feedGameImages[clip.gameName ?? ""] ??
+              "/clutchmetrics-icon.png"
+          })`,
+      }}
+  />
+
+  <span
+      className="feed-game-poster-logo"
+      style={{
+          backgroundImage: `url(${
+              feedGameImages[clip.gameName ?? ""] ??
+              "/clutchmetrics-icon.png"
+          })`,
+      }}
+  />
+
+  <span className="feed-game-poster-text">
+    {clip.gameName ?? "ClutchMetrics"}
+  </span>
+</span>
 
                                     {clip.thumbnailUrl && (
                                         <img
@@ -409,10 +507,17 @@ export default function FeedPage() {
                                 <div className="feed-card-content">
 
                                     <div className="feed-card-meta">
-                    <span>
-                      {clip.gameName ??
-                          "No game"}
-                    </span>
+                    <span className="clip-game-label">
+  {feedGameImages[clip.gameName ?? ""] && (
+      <img
+          src={feedGameImages[clip.gameName ?? ""]}
+          alt={`${clip.gameName} logo`}
+          className="clip-game-logo"
+      />
+  )}
+
+                        {clip.gameName ?? "No game"}
+</span>
 
                                         <span>
                       {formatDate(
@@ -547,6 +652,50 @@ export default function FeedPage() {
                                 </div>
                             </article>
                         ))}
+                        </div>
+
+                        <aside className="feed-up-next">
+                            <h3>Up next</h3>
+
+                            {upNextClips.length === 0 ? (
+                                <p className="feed-up-next-empty">
+                                    No more community clips available yet.
+                                </p>
+                            ) : (
+                                <div className="feed-up-next-list">
+                                    {upNextClips.map((clip) => (
+                                        <button
+                                            key={clip.id}
+                                            type="button"
+                                            className="feed-up-next-item"
+                                            onClick={() => setSelectedClipId(clip.id)}
+                                        >
+                                            <div className="feed-up-next-thumb">
+                                                <img
+                                                    src={
+                                                        feedGameImages[clip.gameName ?? ""] ??
+                                                        "/clutchmetrics-icon.png"
+                                                    }
+                                                    alt={clip.gameName ?? "Game"}
+                                                />
+                                            </div>
+
+                                            <div className="feed-up-next-info">
+                                                <strong>{clip.title}</strong>
+
+                                                <span>
+                {clip.gameName ?? "No game"}
+              </span>
+
+                                                <small>
+                                                    {clip.durationSeconds ?? 0}s
+                                                </small>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </aside>
                     </section>
                 )}
 

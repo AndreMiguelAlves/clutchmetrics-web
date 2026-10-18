@@ -57,6 +57,19 @@ interface GameAccountResponse {
     region: string | null;
     platform: string | null;
 }
+interface SubscriptionResponse {
+    id: number;
+    planCode: "FREE" | "PREMIUM";
+    planName: string;
+    monthlyPrice: number;
+    unlimitedAnalytics: boolean;
+    export4k: boolean;
+    watermarkEnabled: boolean;
+    startedAt: string | null;
+    endsAt: string | null;
+    autoRenew: boolean;
+    active: boolean;
+}
 
 const matches = [
     {
@@ -125,6 +138,8 @@ export default function Home() {
         useState<MatchResponse[]>([]);
     const [gameAccounts, setGameAccounts] =
         useState<GameAccountResponse[]>([]);
+    const [subscription, setSubscription] =
+        useState<SubscriptionResponse | null>(null);
 
     useEffect(() => {
         async function loadProfile() {
@@ -319,6 +334,32 @@ export default function Home() {
         loadGameAccounts();
     }, [router]);
 
+    useEffect(() => {
+        async function loadSubscription() {
+            try {
+                const response = await authenticatedFetch(
+                    "http://localhost:8080/api/subscription/me"
+                );
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data: SubscriptionResponse =
+                    await response.json();
+
+                setSubscription(data);
+            } catch (error) {
+                console.error(
+                    "Could not load subscription:",
+                    error
+                );
+            }
+        }
+
+        loadSubscription();
+    }, []);
+
     function formatMatchTime(playedAt: string) {
         const matchDate = new Date(playedAt);
         const now = new Date();
@@ -463,6 +504,34 @@ export default function Home() {
                             <p>Per match</p>
                         </article>
                     </section>
+
+                    {subscription?.planCode === "FREE" && (
+                        <section className="dashboard-premium-banner">
+                            <div className="dashboard-premium-content">
+                                <div className="dashboard-premium-badge">
+                                    PREMIUM
+                                </div>
+
+                                <div>
+                                    <h2>
+                                        Unlock advanced ClutchMetrics analytics
+                                    </h2>
+
+                                    <p>
+                                        Get unlimited analytics, 4K exports
+                                        and remove watermarks from your clips.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <a
+                                href="/subscription"
+                                className="dashboard-premium-button"
+                            >
+                                Upgrade to Premium
+                            </a>
+                        </section>
+                    )}
 
                     <section className="dashboard-grid">
                         <article className="panel performance-panel">

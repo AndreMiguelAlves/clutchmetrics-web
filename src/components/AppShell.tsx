@@ -20,6 +20,7 @@ import {
   LogOut,
   Users,
   ScrollText,
+  KeyRound,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -79,6 +80,11 @@ const accountItems = [
     label: "Profile",
     href: "/profile",
     icon: UserRound,
+  },
+  {
+    label: "Change Password",
+    href: "/change-password",
+    icon: KeyRound,
   },
 ];
 
@@ -247,25 +253,6 @@ export default function AppShell({
           </button>
 
         </nav>
-
-        <div className="shared-sidebar-bottom">
-          <div className="shared-premium-card">
-            <span>FREE PLAN</span>
-
-            <strong>
-              Unlock more analytics
-            </strong>
-
-            <p>
-              Upgrade for unlimited insights
-              and exports.
-            </p>
-
-            <Link href="/subscription">
-              View Premium
-            </Link>
-          </div>
-        </div>
       </aside>
 
       <section className="shared-main">

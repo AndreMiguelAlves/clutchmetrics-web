@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "../../components/AppShell";
 import { authenticatedFetch } from "../../lib/api";
+import Link from "next/link";
+import VideoFrameThumbnail from "@/components/VideoFrameThumbnail";
 
 const feedGameImages: Record<string, string> = {
     "League of Legends": "/games/lol.png",
@@ -14,6 +16,8 @@ const feedGameImages: Record<string, string> = {
 
 interface ClipResponse {
     id: number;
+    authorId: number;
+    authorUsername: string;
     gameCode: string | null;
     gameName: string | null;
     title: string;
@@ -120,6 +124,18 @@ export default function FeedPage() {
 
                 const data: ClipResponse[] =
                     await response.json();
+
+                const requestedClipId = new URLSearchParams(
+                    window.location.search
+                ).get("clip");
+
+                const matchingClip = data.find(
+                    (clip) => String(clip.id) === requestedClipId
+                );
+
+                if (matchingClip) {
+                    setSelectedClipId(matchingClip.id);
+                }
 
                 setClips(data);
             } catch (error) {
@@ -497,6 +513,20 @@ export default function FeedPage() {
                                         />
                                     )}
 
+                                    {clip.videoUrl &&
+                                        /\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(clip.videoUrl) && (
+                                            <video
+                                                key={clip.id}
+                                                className="feed-video-player"
+                                                src={clip.videoUrl}
+                                                controls
+                                                preload="metadata"
+                                                playsInline
+                                            >
+                                                Your browser does not support video playback.
+                                            </video>
+                                        )}
+
                                     {clip.durationSeconds != null && (
                                         <small>
                                             {clip.durationSeconds}s
@@ -532,6 +562,28 @@ export default function FeedPage() {
                                         {clip.description ||
                                             "No description."}
                                     </p>
+
+
+                                    <Link
+                                        href={`/players/${clip.authorId}`}
+                                        className="feed-author"
+                                        aria-label={`View ${clip.authorUsername}'s profile`}
+                                    >
+                                        <div className="feed-author-avatar">
+                                            {(clip.authorUsername?.trim().charAt(0) || "P").toUpperCase()}
+                                        </div>
+
+                                        <div className="feed-author-info">
+    <span className="feed-author-caption">
+      Uploaded by
+    </span>
+
+                                            <strong className="feed-author-name">
+                                                {clip.authorUsername || "Unknown player"}
+                                            </strong>
+                                        </div>
+                                    </Link>
+
 
                                     <div className="feed-social">
                                         <button
@@ -670,6 +722,7 @@ export default function FeedPage() {
                                             className="feed-up-next-item"
                                             onClick={() => setSelectedClipId(clip.id)}
                                         >
+
                                             <div className="feed-up-next-thumb">
                                                 <img
                                                     src={
@@ -678,7 +731,21 @@ export default function FeedPage() {
                                                     }
                                                     alt={clip.gameName ?? "Game"}
                                                 />
+
+                                                <VideoFrameThumbnail videoUrl={clip.videoUrl} />
+
+                                                {clip.thumbnailUrl && (
+                                                    <img
+                                                        src={clip.thumbnailUrl}
+                                                        alt={`${clip.title} thumbnail`}
+                                                        className="feed-up-next-custom-thumbnail"
+                                                        onError={(event) => {
+                                                            event.currentTarget.style.display = "none";
+                                                        }}
+                                                    />
+                                                )}
                                             </div>
+
 
                                             <div className="feed-up-next-info">
                                                 <strong>{clip.title}</strong>

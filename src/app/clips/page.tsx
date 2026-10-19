@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "../../components/AppShell";
 import { authenticatedFetch } from "../../lib/api";
+import VideoFrameThumbnail from "@/components/VideoFrameThumbnail";
+import ClipToast from "@/components/ClipToast";
 
 const clipGameImages: Record<string, string> = {
     "League of Legends": "/games/lol.png",
@@ -69,6 +71,57 @@ export default function ClipsPage() {
         useState("");
     const [actionClipId, setActionClipId] =
         useState<number | null>(null);
+    const [clipToDelete, setClipToDelete] = useState<ClipResponse | null>(null);
+    const [clipSearch, setClipSearch] = useState("");
+    const [visibilityFilter, setVisibilityFilter] = useState("ALL");
+    const [statusFilter, setStatusFilter] = useState("ALL");
+
+
+    useEffect(() => {
+        if (clipToDelete || (!error && !success)) {
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            setError("");
+            setSuccess("");
+        }, 10000);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [error, success, clipToDelete]);
+
+
+
+    useEffect(() => {
+        const url = videoUrl.trim();
+
+        if (!/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(url)) {
+            return;
+        }
+
+        const video = document.createElement("video");
+        video.preload = "metadata";
+
+        video.onloadedmetadata = () => {
+            const seconds = video.duration;
+
+            if (Number.isFinite(seconds) && seconds > 0) {
+                setDurationSeconds(String(Math.ceil(seconds)));
+            }
+        };
+
+        video.src = url;
+        video.load();
+
+        return () => {
+            video.onloadedmetadata = null;
+            video.removeAttribute("src");
+            video.load();
+        };
+    }, [videoUrl]);
+
 
     useEffect(() => {
         async function fetchClips() {
@@ -111,6 +164,12 @@ export default function ClipsPage() {
     }, [router]);
 
     async function handleCreateClip() {
+
+        if (!gameCode) {
+            setError("Please select a game before creating a clip.");
+            return;
+        }
+
         if (!title.trim()) {
             setError("Title is required.");
             return;
@@ -134,8 +193,7 @@ export default function ClipsPage() {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        gameCode:
-                            gameCode || null,
+                        gameCode: gameCode,
 
                         title: title.trim(),
 
@@ -284,6 +342,69 @@ export default function ClipsPage() {
         }
     }
 
+
+    async function handleDeleteClip(clip: ClipResponse): Promise<void> {
+        setActionClipId(clip.id);
+        setError("");
+        setSuccess("");
+
+        try {
+            const response = await authenticatedFetch(
+                `http://localhost:8080/api/clips/${clip.id}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error("SESSION_EXPIRED");
+                }
+
+                if (response.status === 403) {
+                    throw new Error(
+                        "You don't have permission to delete this clip."
+                    );
+                }
+
+                if (response.status === 404) {
+                    throw new Error("Clip not found.");
+                }
+
+                throw new Error(
+                    "Could not delete the clip. Please try again."
+                );
+            }
+
+            setClips((current) =>
+                current.filter((item) => item.id !== clip.id)
+            );
+
+            setSuccess("Clip deleted successfully.");
+            setClipToDelete(null);
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN")
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Could not delete the clip."
+            );
+        } finally {
+            setActionClipId(null);
+        }
+    }
+
+
     function formatDate(value: string) {
         return new Date(value).toLocaleString(
             "en-GB",
@@ -296,6 +417,27 @@ export default function ClipsPage() {
             }
         );
     }
+
+
+    const filteredClips = clips.filter((clip) => {
+        const search = clipSearch.trim().toLowerCase();
+
+        const matchesSearch =
+            clip.title.toLowerCase().includes(search) ||
+            (clip.description ?? "").toLowerCase().includes(search) ||
+            (clip.gameName ?? "").toLowerCase().includes(search);
+
+        const matchesVisibility =
+            visibilityFilter === "ALL" ||
+            clip.visibility === visibilityFilter;
+
+        const matchesStatus =
+            statusFilter === "ALL" ||
+            clip.status === statusFilter;
+
+        return matchesSearch && matchesVisibility && matchesStatus;
+    });
+
 
     return (
         <AppShell title="Clips">
@@ -461,17 +603,45 @@ export default function ClipsPage() {
                     </section>
                 )}
 
-                {error && (
-                    <p className="profile-error">
-                        {error}
-                    </p>
+
+                {!showForm && !loading && clips.length > 0 && (
+                    <div className="clips-discovery">
+
+                        <input
+                            type="search"
+                            className="clips-search-input"
+                            placeholder="Search your clips by title, description or game..."
+                            value={clipSearch}
+                            onChange={(event) => setClipSearch(event.target.value)}
+                        />
+
+                        <div className="clips-filter-controls">
+
+                            <select
+                                value={visibilityFilter}
+                                onChange={(event) => setVisibilityFilter(event.target.value)}
+                                aria-label="Filter clips by visibility"
+                            >
+                                <option value="ALL">All visibility</option>
+                                <option value="PUBLIC">Public</option>
+                                <option value="PRIVATE">Private</option>
+                            </select>
+
+                            <select
+                                value={statusFilter}
+                                onChange={(event) => setStatusFilter(event.target.value)}
+                                aria-label="Filter clips by status"
+                            >
+                                <option value="ALL">All statuses</option>
+                                <option value="READY">Ready</option>
+                                <option value="UPLOADED">Uploaded</option>
+                            </select>
+
+                        </div>
+
+                    </div>
                 )}
 
-                {success && (
-                    <p className="profile-success">
-                        {success}
-                    </p>
-                )}
 
                 {loading ? (
                     <div className="matches-empty">
@@ -483,15 +653,44 @@ export default function ClipsPage() {
                     </div>
                 ) : (
                     <section className="clips-grid">
-                        {clips.map((clip) => (
+                        {filteredClips.length === 0 && (
+                            <div className="clips-filter-empty">
+                                No clips match your search or filters.
+                            </div>
+                        )}
+                        {filteredClips.map((clip: ClipResponse) => (
                             <article
                                 className="clip-card"
                                 key={clip.id}
                             >
                                 <div className="clip-thumbnail">
-  <span className="clip-thumbnail-fallback">
-    CM
+  <span className="feed-game-poster">
+  <span
+      className="feed-game-poster-backdrop"
+      style={{
+          backgroundImage: `url(${
+              clipGameImages[clip.gameName ?? ""] ??
+              "/clutchmetrics-icon.png"
+          })`,
+      }}
+  />
+
+  <span
+      className="feed-game-poster-logo"
+      style={{
+          backgroundImage: `url(${
+              clipGameImages[clip.gameName ?? ""] ??
+              "/clutchmetrics-icon.png"
+          })`,
+      }}
+  />
+
+  <span className="feed-game-poster-text">
+    {clip.gameName ?? "ClutchMetrics"}
   </span>
+</span>
+
+                                    <VideoFrameThumbnail videoUrl={clip.videoUrl} />
 
                                     {clip.thumbnailUrl && (
                                         <img
@@ -605,6 +804,15 @@ export default function ClipsPage() {
                                                 </button>
                                             )}
 
+
+                                        <button
+                                            type="button"
+                                            className="clip-delete-button"
+                                            disabled={actionClipId === clip.id}
+                                            onClick={() => setClipToDelete(clip)}
+                                        >
+                                            {actionClipId === clip.id ? "Deleting..." : "Delete"}
+                                        </button>
                                     </div>
                                 </div>
                             </article>
@@ -613,6 +821,88 @@ export default function ClipsPage() {
                 )}
 
             </div>
+
+            {/* JANELA DE CONFIRMAÇÃO DELETE */}
+            {clipToDelete && (
+                <div className="clip-delete-modal-overlay">
+
+                    <div
+                        className="clip-delete-modal"
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="delete-clip-title"
+                        aria-describedby="delete-clip-description"
+                    >
+                        <div className="clip-delete-modal-icon">
+                            !
+                        </div>
+
+                        <h2 id="delete-clip-title">
+                            Delete clip?
+                        </h2>
+
+                        <p id="delete-clip-description">
+                            Are you sure you want to delete{" "}
+                            <strong>&quot;{clipToDelete.title}&quot;</strong>?
+                        </p>
+
+                        <p className="clip-delete-warning">
+                            This action cannot be undone. The clip and its
+                            associated likes and comments will be removed.
+                        </p>
+
+                        {error && (
+                            <p className="clip-delete-error" role="alert">
+                                {error}
+                            </p>
+                        )}
+
+                        <div className="clip-delete-modal-actions">
+                            <button
+                                type="button"
+                                className="clip-delete-cancel"
+                                disabled={actionClipId === clipToDelete.id}
+                                onClick={() => setClipToDelete(null)}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                className="clip-delete-confirm"
+                                disabled={actionClipId === clipToDelete.id}
+                                onClick={() => void handleDeleteClip(clipToDelete)}
+                            >
+                                {actionClipId === clipToDelete.id
+                                    ? "Deleting..."
+                                    : "Delete clip"}
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            )}
+
+
+            {!clipToDelete && (
+                <>
+                    {error ? (
+                        <ClipToast
+                            message={error}
+                            type="error"
+                            onClose={() => setError("")}
+                        />
+                    ) : success ? (
+                        <ClipToast
+                            message={success}
+                            type="success"
+                            onClose={() => setSuccess("")}
+                        />
+                    ) : null}
+                </>
+            )}
+
+
         </AppShell>
     );
 }

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import ChatWidget from "@/components/ChatWidget";
 import Image from "next/image";
+import SiteFooter from "@/components/SiteFooter";
 
 import {
   LayoutDashboard,
@@ -208,7 +209,7 @@ export default function AppShell({
   return (
     <main className="shared-app-shell">
       <aside className="shared-sidebar">
-        <div className="shared-brand">
+        <Link href="/dashboard" className="shared-brand">
           <div className="shared-brand-mark">
             <Image
                 src="/clutchmetrics-icon.png"
@@ -223,7 +224,7 @@ export default function AppShell({
             <strong>ClutchMetrics</strong>
             <span>PERFORMANCE HUB</span>
           </div>
-        </div>
+        </Link>
 
         <nav className="shared-navigation">
           <p className="shared-nav-label">
@@ -278,11 +279,17 @@ export default function AppShell({
           </div>
         </header>
 
+
         <div className="shared-page-content">
           {children}
         </div>
+
+        <SiteFooter />
+
       </section>
+
       <ChatWidget />
     </main>
+
   );
 }

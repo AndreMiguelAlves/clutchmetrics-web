@@ -737,3 +737,61 @@
     font-size: 13px;
     line-height: 1.6;
 }
+
+
+/* LOGIN - TEXT READABILITY */
+
+/* Descriptions below KDA, Clips and Games */
+.heroStats small {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #a3b2cc;
+}
+
+/* Small labels above the indicators */
+.heroStats span {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #9aaccb;
+}
+
+/* Terms and Privacy text */
+.terms {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #9eafc9;
+}
+
+/* Clickable legal links */
+.terms a {
+    color: #ad98ff;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.terms a:hover {
+    color: #c8bbff;
+}
+.terms a {
+    white-space: nowrap;
+}
+
+
+/* LOGIN - FINAL TEXT READABILITY */
+
+/* New to ClutchMetrics? */
+.separator p {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    color: #9eafcc;
+}
+
+/* Secure authentication message */
+.visualFooter span {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #9eafcc;
+}
+

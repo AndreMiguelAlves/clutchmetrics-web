@@ -45,13 +45,13 @@ export default function ChallengesPage() {
 
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        loadChallenges();
-    }, []);
+    const [statusCheckTime, setStatusCheckTime] = useState<number>(0);
+
 
     async function loadChallenges() {
         setLoading(true);
         setError("");
+        setStatusCheckTime(Date.now());
 
         try {
             const [challengesResponse, myChallengesResponse] =
@@ -96,6 +96,14 @@ export default function ChallengesPage() {
             setLoading(false);
         }
     }
+
+
+    useEffect(() => {
+        Promise.resolve().then(() => {
+            void loadChallenges();
+        });
+    }, []);
+
 
     async function handleJoinChallenge(
         challengeId: number
@@ -244,6 +252,30 @@ export default function ChallengesPage() {
                                     participation
                                 );
 
+
+                            const now = statusCheckTime;
+
+                            const startTime = new Date(challenge.startsAt).getTime();
+                            const endTime = new Date(challenge.endsAt).getTime();
+
+                            const isUpcoming =
+                                challenge.status === "ACTIVE" && now < startTime;
+
+                            const isEnded =
+                                challenge.status === "ACTIVE" && now > endTime;
+
+                            const isJoinable =
+                                challenge.status === "ACTIVE" &&
+                                !isUpcoming &&
+                                !isEnded;
+
+                            const displayStatus = isEnded
+                                ? "ENDED"
+                                : isUpcoming
+                                    ? "UPCOMING"
+                                    : challenge.status;
+
+
                             return (
                                 <article
                                     className="challenge-card"
@@ -260,9 +292,15 @@ export default function ChallengesPage() {
                                             </h2>
                                         </div>
 
-                                        <span className="challenge-status">
-                      {challenge.status}
-                    </span>
+
+                                        <span
+                                            className={`challenge-status ${
+                                                isEnded ? "challenge-status-ended" : ""
+                                            }`}
+                                        >
+    {displayStatus}
+</span>
+
                                     </div>
 
                                     <p className="challenge-description">
@@ -350,8 +388,8 @@ export default function ChallengesPage() {
                                         }
                                         disabled={
                                             joined ||
-                                            joiningChallengeId ===
-                                            challenge.id
+                                            joiningChallengeId === challenge.id ||
+                                            !isJoinable
                                         }
                                         onClick={() =>
                                             handleJoinChallenge(
@@ -359,14 +397,21 @@ export default function ChallengesPage() {
                                             )
                                         }
                                     >
+
                                         {joined
                                             ? participation?.completed
                                                 ? "Completed"
                                                 : "Joined"
-                                            : joiningChallengeId ===
-                                            challenge.id
+                                            : joiningChallengeId === challenge.id
                                                 ? "Joining..."
-                                                : "Join Challenge"}
+                                                : isEnded
+                                                    ? "Challenge Ended"
+                                                    : isUpcoming
+                                                        ? "Coming Soon"
+                                                        : !isJoinable
+                                                            ? "Unavailable"
+                                                            : "Join Challenge"}
+
                                     </button>
                                 </article>
                             );

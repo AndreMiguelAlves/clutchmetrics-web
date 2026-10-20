@@ -1,0 +1,133 @@
+
+.page {
+    min-height: 100vh;
+    background: #080c14;
+    color: #f5f6ff;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px 6%;
+    border-bottom: 1px solid #222c40;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.brand strong {
+    display: block;
+    font-size: 16px;
+}
+
+.brand span {
+    display: block;
+    margin-top: 3px;
+    color: #9aa9c4;
+    font-size: 12px;
+    letter-spacing: 1.2px;
+}
+
+.loginLink {
+    color: #b9a9ff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 28px 90px;
+}
+
+.intro {
+    padding: 85px 0 55px;
+}
+
+.eyebrow {
+    color: #947cff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.7px;
+}
+
+.intro h1 {
+    margin: 18px 0;
+    font-size: clamp(36px, 5vw, 56px);
+    letter-spacing: -1px;
+}
+
+.intro p {
+    color: #b0bed7;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.intro small {
+    display: block;
+    margin-top: 20px;
+    color: #8394b2;
+    font-size: 13px;
+}
+
+.section {
+    padding: 28px 0;
+    border-top: 1px solid #273047;
+}
+
+.section h2 {
+    margin: 0 0 18px;
+    font-size: 21px;
+}
+
+.section p {
+    color: #acbad3;
+    font-size: 15px;
+    line-height: 1.9;
+}
+
+.inlineLink {
+    display: inline-block;
+    margin-top: 8px;
+    color: #a995ff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.inlineLink:hover {
+    color: #c6baff;
+}
+
+.notice {
+    margin-top: 35px;
+    padding: 22px;
+    background: rgba(117, 81, 245, 0.08);
+    border: 1px solid rgba(117, 81, 245, 0.25);
+    border-radius: 12px;
+    color: #b8c4dc;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+@media (max-width: 600px) {
+    .header {
+        padding: 18px;
+    }
+
+    .container {
+        padding: 0 18px 55px;
+    }
+
+    .intro {
+        padding: 55px 0 35px;
+    }
+}

@@ -1,0 +1,247 @@
+
+.page {
+    min-height: 100vh;
+    background: #080c14;
+    color: #f5f6ff;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px 6%;
+    border-bottom: 1px solid #222c40;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.brand strong {
+    display: block;
+    font-size: 16px;
+}
+
+.brand span {
+    display: block;
+    margin-top: 3px;
+    color: #9aa9c4;
+    font-size: 12px;
+    letter-spacing: 1.2px;
+}
+
+.loginLink {
+    color: #b9a9ff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 28px 90px;
+}
+
+.hero {
+    padding: 85px 0 65px;
+}
+
+.eyebrow {
+    color: #947cff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.7px;
+}
+
+.hero h1 {
+    margin: 18px 0;
+    font-size: clamp(38px, 5vw, 58px);
+    letter-spacing: -1.5px;
+}
+
+.hero p {
+    max-width: 680px;
+    color: #b0bed7;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.section {
+    padding: 52px 0;
+    border-top: 1px solid #273047;
+    scroll-margin-top: 30px;
+}
+
+.section h2 {
+    margin: 16px 0 28px;
+    font-size: 30px;
+}
+
+.faqList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.faqItem {
+    padding: 20px 24px;
+    border: 1px solid #2c3750;
+    border-radius: 12px;
+    background: #111827;
+}
+
+.faqItem summary {
+    position: relative;
+    padding-right: 25px;
+    color: #f5f6ff;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.6;
+    cursor: pointer;
+    list-style: none;
+}
+
+.faqItem summary::-webkit-details-marker {
+    display: none;
+}
+
+.faqItem summary::after {
+    content: "+";
+    position: absolute;
+    right: 0;
+    top: 0;
+    color: #a68cff;
+    font-size: 21px;
+}
+
+.faqItem[open] summary::after {
+    content: "−";
+}
+
+.faqItem p {
+    margin: 16px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid #29354c;
+    color: #adbbd4;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.contact {
+    margin-top: 30px;
+    padding: 42px;
+    border: 1px solid #483a7b;
+    border-radius: 16px;
+    background: linear-gradient(
+            120deg,
+            #1a163b,
+            #111827
+    );
+    scroll-margin-top: 30px;
+}
+
+.contact h2 {
+    margin: 14px 0;
+    font-size: 28px;
+}
+
+.contact p {
+    max-width: 650px;
+    margin-bottom: 26px;
+    color: #b2c0d8;
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+.contact a {
+    display: inline-block;
+    padding: 13px 22px;
+    border-radius: 9px;
+    background: #7551f5;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.contact a:hover {
+    background: #8869ff;
+}
+
+@media (max-width: 600px) {
+    .header {
+        padding: 18px;
+    }
+
+    .container {
+        padding: 0 18px 55px;
+    }
+
+    .hero {
+        padding: 60px 0 45px;
+    }
+
+    .faqItem {
+        padding: 17px;
+    }
+
+    .contact {
+        padding: 27px 20px;
+    }
+}
+
+/* CONTACT & SUPPORT BUTTONS */
+
+.contactActions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.contact .emailButton {
+    background: #7551f5;
+    color: #ffffff;
+}
+
+.contact .chatButton {
+    background: #252b42;
+    border: 1px solid #48536f;
+    color: #e2e6f5;
+}
+
+.contact .chatButton:hover {
+    background: #343d5c;
+}
+
+.contactEmail {
+    margin-top: 22px;
+    margin-bottom: 0;
+    font-size: 14px;
+    color: #aab8d0;
+}
+
+.contact .contactEmail a {
+    display: inline;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #b6a2ff;
+    font-size: inherit;
+    font-weight: 500;
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+}
+
+.contact .contactEmail a:hover {
+    background: none;
+    color: #d0c4ff;
+}
+
+

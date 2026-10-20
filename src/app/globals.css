@@ -7610,6 +7610,49 @@ button.clip-delete-button:disabled {
 }
 
 
+/* CHALLENGES - ENDED STATUS */
+
+.challenge-status-ended {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #94a3b8;
+}
+
+
+/* ClutchMetrics official brand icon */
+
+.brandMark {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.brandLogo {
+  display: block;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+
+/* REGISTER - OFFICIAL CLUTCHMETRICS LOGO */
+
+.auth-logo-image {
+  display: block;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+
+
 
 
 

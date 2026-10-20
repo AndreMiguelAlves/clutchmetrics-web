@@ -11,6 +11,8 @@ import {
 
 import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import SiteFooter from "@/components/SiteFooter";
 
 import styles from "./login.module.css";
 import Link from "next/link";
@@ -94,10 +96,17 @@ function LoginContent() {
                 <div className={styles.visualGlowTwo} />
 
                 <header className={styles.brand}>
+
                     <div className={styles.brandMark}>
-                        <span>C</span>
-                        <span>M</span>
+                        <Image
+                            src="/clutchmetrics-icon.png"
+                            alt="ClutchMetrics"
+                            width={46}
+                            height={46}
+                            className={styles.brandLogo}
+                        />
                     </div>
+
 
                     <div>
                         <strong>ClutchMetrics</strong>
@@ -124,25 +133,27 @@ function LoginContent() {
                         with data that matters.
                     </p>
 
+
                     <div className={styles.heroStats}>
                         <div>
-                            <span>KDA</span>
-                            <strong>4.26</strong>
-                            <small>Performance tracking</small>
+                            <span>PERFORMANCE</span>
+                            <strong>KDA</strong>
+                            <small>Match statistics & insights</small>
                         </div>
 
                         <div>
-                            <span>WIN RATE</span>
-                            <strong>61.2%</strong>
-                            <small>Competitive insights</small>
+                            <span>COMMUNITY</span>
+                            <strong>Clips</strong>
+                            <small>Share your highlights</small>
                         </div>
 
                         <div>
                             <span>GAMES</span>
                             <strong>4</strong>
-                            <small>One platform</small>
+                            <small>Competitive titles supported</small>
                         </div>
                     </div>
+
                 </div>
 
                 <div className={styles.visualFooter}>
@@ -312,10 +323,18 @@ function LoginContent() {
                         Create an account
                     </button>
 
+
                     <p className={styles.terms}>
-                        By continuing, you agree to the ClutchMetrics Terms
-                        of Service and Privacy Policy.
+                        By continuing, you agree to the ClutchMetrics{" "}
+                        <Link href="/terms">
+                            Terms of Service
+                        </Link>
+                        {" "}and{" "}
+                        <Link href="/privacy">
+                            Privacy Policy
+                        </Link>.
                     </p>
+
                 </div>
             </section>
         </main>
@@ -323,10 +342,15 @@ function LoginContent() {
 }
 
 
+
 export default function LoginPage() {
     return (
-        <Suspense fallback={null}>
-            <LoginContent />
-        </Suspense>
+        <>
+            <Suspense fallback={null}>
+                <LoginContent />
+            </Suspense>
+
+            <SiteFooter />
+        </>
     );
 }

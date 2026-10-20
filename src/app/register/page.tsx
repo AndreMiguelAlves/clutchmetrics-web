@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import SiteFooter from "@/components/SiteFooter";
+import Image from "next/image";
 
 export default function RegisterPage() {
     const [username, setUsername] = useState("");
@@ -78,12 +80,19 @@ export default function RegisterPage() {
     }
 
     return (
-        <main className="auth-page">
+        <>
+            <main className="auth-page">
             <section className="auth-card">
                 <div className="auth-brand">
-                    <div className="auth-logo">
-                        CM
-                    </div>
+
+                    <Image
+                        src="/clutchmetrics-icon.png"
+                        alt="ClutchMetrics"
+                        width={44}
+                        height={44}
+                        className="auth-logo-image"
+                    />
+
 
                     <div>
                         <strong>ClutchMetrics</strong>
@@ -208,7 +217,11 @@ export default function RegisterPage() {
                         Sign in
                     </Link>
                 </div>
+
             </section>
-        </main>
+            </main>
+
+            <SiteFooter />
+        </>
     );
 }

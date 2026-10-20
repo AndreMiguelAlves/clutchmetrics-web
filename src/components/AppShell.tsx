@@ -22,6 +22,7 @@ import {
   Users,
   ScrollText,
   KeyRound,
+  ShieldAlert,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -100,6 +101,13 @@ const adminItems = [
     href: "/admin/audit-logs",
     icon: ScrollText,
   },
+
+  {
+    label: "Content Reports",
+    href: "/admin/clip-reports",
+    icon: ShieldAlert,
+  },
+
 ];
 
 export default function AppShell({

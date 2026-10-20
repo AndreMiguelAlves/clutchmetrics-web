@@ -9,14 +9,16 @@ import {
     ShieldCheck,
 } from "lucide-react";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import styles from "./login.module.css";
 import Link from "next/link";
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const emailVerified = searchParams.get("verified") === "success";
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -25,6 +27,7 @@ export default function LoginPage() {
 
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -177,6 +180,22 @@ export default function LoginPage() {
                         className={styles.form}
                         onSubmit={handleSubmit}
                     >
+
+
+                        {emailVerified && (
+                            <div className={styles.verifiedNotice} role="status">
+                                <ShieldCheck size={21} />
+
+                                <div>
+                                    <strong>Email verified successfully!</strong>
+                                    <p>
+                                        Your account has been activated.
+                                        You can now sign in to ClutchMetrics.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className={styles.field}>
                             <label htmlFor="email">
                                 Email
@@ -300,5 +319,14 @@ export default function LoginPage() {
                 </div>
             </section>
         </main>
+    );
+}
+
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={null}>
+            <LoginContent />
+        </Suspense>
     );
 }

@@ -703,3 +703,37 @@
     color: #a997ff;
     text-decoration: underline;
 }
+
+
+/* EMAIL VERIFICATION SUCCESS */
+
+.verifiedNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding: 16px;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    border-radius: 11px;
+    background: rgba(52, 211, 153, 0.08);
+    color: #a7f3d0;
+}
+
+.verifiedNotice svg {
+    flex-shrink: 0;
+    color: #34d399;
+}
+
+.verifiedNotice strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.verifiedNotice p {
+    margin: 0;
+    color: #b7c9c4;
+    font-size: 13px;
+    line-height: 1.6;
+}

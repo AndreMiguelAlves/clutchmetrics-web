@@ -6,6 +6,7 @@ import AppShell from "../../components/AppShell";
 import { authenticatedFetch } from "../../lib/api";
 import Link from "next/link";
 import VideoFrameThumbnail from "@/components/VideoFrameThumbnail";
+import ClipToast from "../../components/ClipToast";
 
 const feedGameImages: Record<string, string> = {
     "League of Legends": "/games/lol.png",
@@ -73,9 +74,16 @@ export default function FeedPage() {
         useState(false);
     const [deletingCommentId, setDeletingCommentId] =
         useState<number | null>(null);
+    const [reportClipId, setReportClipId] = useState<number | null>(null);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGame, setSelectedGame] = useState("ALL");
+    const [reportReason, setReportReason] = useState("NOT_GAMING_RELATED");
+    const [reportDetails, setReportDetails] = useState("");
+    const [reportSubmitting, setReportSubmitting] = useState(false);
+    const [reportError, setReportError] = useState("");
+    const [reportSuccess, setReportSuccess] = useState("");
+
 
     const feedGames = [
         { label: "All clips", value: "ALL" },
@@ -226,6 +234,81 @@ export default function FeedPage() {
             setLikingClipId(null);
         }
     }
+
+
+    async function handleSubmitReport(): Promise<void> {
+        if (reportClipId === null || reportSubmitting) {
+            return;
+        }
+
+        setReportSubmitting(true);
+        setReportError("");
+        setReportSuccess("");
+
+        try {
+            const response = await authenticatedFetch(
+                `http://localhost:8080/api/clips/${reportClipId}/reports`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        reason: reportReason,
+                        details: reportDetails.trim() || null,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 409) {
+                    throw new Error(
+                        "You have already reported this clip."
+                    );
+                }
+
+                if (response.status === 400) {
+                    throw new Error(
+                        "This clip cannot be reported. Check that it is public and not your own."
+                    );
+                }
+
+                if (response.status === 401 ||
+                    response.status === 403) {
+                    throw new Error(
+                        "Please sign in again to report this clip."
+                    );
+                }
+
+                throw new Error(
+                    "Could not submit your report. Please try again."
+                );
+            }
+
+            // Denúncia enviada com sucesso
+            setReportSuccess(
+                "Report submitted successfully. Our team will review it."
+            );
+
+            // Fechar e limpar o formulário
+            setReportClipId(null);
+            setReportReason("NOT_GAMING_RELATED");
+            setReportDetails("");
+
+        } catch (error) {
+            console.error(error);
+
+            setReportError(
+                error instanceof Error
+                    ? error.message
+                    : "Could not submit your report."
+            );
+
+        } finally {
+            setReportSubmitting(false);
+        }
+    }
+
 
     async function handleOpenComments(clipId: number) {
         if (openCommentsClipId === clipId) {
@@ -612,6 +695,18 @@ export default function FeedPage() {
       {clip.commentCount ?? 0} Comments
     </span>
                                         </button>
+
+
+                                        <button
+                                            type="button"
+                                            className="feed-comment-button feed-report-button"
+                                            onClick={() => setReportClipId(clip.id)}
+                                        >
+                                            <span className="feed-social-icon">⚑</span>
+                                            <span>Report</span>
+                                        </button>
+
+
                                     </div>
                                     {openCommentsClipId === clip.id && (
                                         <div className="feed-comments">
@@ -767,6 +862,127 @@ export default function FeedPage() {
                 )}
 
             </div>
+
+
+            {/* REPORT CLIP MODAL */}
+            {reportClipId !== null && (
+                <div className="feed-report-overlay">
+                    <div
+                        className="feed-report-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="feed-report-title"
+                    >
+                        <div className="feed-report-header">
+                            <h2 id="feed-report-title">
+                                Report clip
+                            </h2>
+
+                            <button
+                                type="button"
+                                className="feed-report-close"
+                                onClick={() => {
+                                    setReportClipId(null);
+                                    setReportReason("NOT_GAMING_RELATED");
+                                    setReportDetails("");
+                                }}
+                                aria-label="Close report window"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <p className="feed-report-description">
+                            Help us keep the ClutchMetrics community safe.
+                            Tell us why you are reporting this clip.
+                        </p>
+
+                        <div className="feed-report-divider" />
+
+                        <h3 className="feed-report-label">
+                            Reason
+                        </h3>
+
+                        <div className="feed-report-options">
+                            {([
+                                ["NOT_GAMING_RELATED", "Not gaming related"],
+                                ["INAPPROPRIATE_CONTENT", "Inappropriate content"],
+                                ["SPAM", "Spam"],
+                                ["OTHER", "Other"],
+                            ] as const).map(([value, label]) => (
+                                <label
+                                    className="feed-report-option"
+                                    key={value}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="reportReason"
+                                        value={value}
+                                        checked={reportReason === value}
+                                        onChange={() => setReportReason(value)}
+                                    />
+                                    <span>{label}</span>
+                                </label>
+                            ))}
+                        </div>
+
+                        <label
+                            className="feed-report-label"
+                            htmlFor="feed-report-details"
+                        >
+                            Additional details (optional)
+                        </label>
+
+                        <textarea
+                            id="feed-report-details"
+                            className="feed-report-textarea"
+                            placeholder="Describe the issue..."
+                            value={reportDetails}
+                            onChange={(e) => setReportDetails(e.target.value)}
+                            maxLength={500}
+                            rows={4}
+                        />
+
+                        {reportError && (
+                            <p className="feed-report-error" role="alert">
+                                {reportError}
+                            </p>
+                        )}
+
+                        <div className="feed-report-footer">
+                            <button
+                                type="button"
+                                className="feed-report-cancel"
+                                onClick={() => setReportClipId(null)}
+                            >
+                                Cancel
+                            </button>
+
+
+                            <button
+                                type="button"
+                                className="feed-report-submit"
+                                onClick={handleSubmitReport}
+                                disabled={reportSubmitting}
+                            >
+                                {reportSubmitting
+                                    ? "Submitting..."
+                                    : "Submit report"}
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {reportSuccess && (
+                <ClipToast
+                    message={reportSuccess}
+                    type="success"
+                    onClose={() => setReportSuccess("")}
+                />
+            )}
+
         </AppShell>
     );
 }

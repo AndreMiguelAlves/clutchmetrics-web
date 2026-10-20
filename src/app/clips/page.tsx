@@ -31,6 +31,24 @@ interface ClipResponse {
     commentCount?: number;
 }
 
+
+function isLocalMp4(videoUrl: string | null | undefined): boolean {
+    if (!videoUrl) return false;
+
+    try {
+        const url = new URL(videoUrl, "http://localhost:3000");
+
+        return (
+            url.origin === "http://localhost:3000" &&
+            url.pathname.startsWith("/videos/") &&
+            url.pathname.toLowerCase().endsWith(".mp4")
+        );
+    } catch {
+        return false;
+    }
+}
+
+
 export default function ClipsPage() {
     const router = useRouter();
 
@@ -72,9 +90,12 @@ export default function ClipsPage() {
     const [actionClipId, setActionClipId] =
         useState<number | null>(null);
     const [clipToDelete, setClipToDelete] = useState<ClipResponse | null>(null);
+    const [clipToExport, setClipToExport] =
+        useState<ClipResponse | null>(null);
     const [clipSearch, setClipSearch] = useState("");
     const [visibilityFilter, setVisibilityFilter] = useState("ALL");
     const [statusFilter, setStatusFilter] = useState("ALL");
+
 
 
     useEffect(() => {
@@ -805,6 +826,19 @@ export default function ClipsPage() {
                                             )}
 
 
+                                        {clip.status === "READY" && isLocalMp4(clip.videoUrl) && (
+                                            <button
+                                                type="button"
+                                                className="clip-export-button"
+                                                disabled={actionClipId === clip.id}
+                                                onClick={() => setClipToExport(clip)}
+                                            >
+                                                Export
+                                            </button>
+                                        )}
+
+
+
                                         <button
                                             type="button"
                                             className="clip-delete-button"
@@ -880,6 +914,93 @@ export default function ClipsPage() {
                         </div>
                     </div>
 
+                </div>
+            )}
+
+
+            {/* JANELA DE EXPORTAÇÃO */}
+            {clipToExport && (
+                <div className="clip-export-overlay">
+                    <div
+                        className="clip-export-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="clip-export-title"
+                    >
+                        <div className="clip-export-header">
+                            <h2 id="clip-export-title">Export clip</h2>
+
+                            <button
+                                type="button"
+                                className="clip-export-close"
+                                onClick={() => setClipToExport(null)}
+                                aria-label="Close export window"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="clip-export-info">
+                            <img
+                                src={
+                                    clipToExport.thumbnailUrl ||
+                                    clipGameImages[clipToExport.gameName ?? ""] ||
+                                    "/clutchmetrics-icon.png"
+                                }
+                                alt={clipToExport.title}
+                            />
+
+                            <div>
+                                <h3>{clipToExport.title}</h3>
+
+                                <p>
+                                    {clipToExport.gameName ?? "No game"}
+                                    {" · "}
+                                    {clipToExport.durationSeconds ?? 0} seconds
+                                </p>
+
+                                <span className="clip-export-ready">
+            {clipToExport.status}
+          </span>
+                            </div>
+                        </div>
+
+                        <div className="clip-export-divider" />
+
+                        <h3 className="clip-export-section-title">
+                            Export format
+                        </h3>
+
+                        <div className="clip-export-formats">
+                            <div className="clip-export-format clip-export-format-future">
+                                <span className="clip-export-format-icon">▯</span>
+                                <strong>Vertical · 9:16</strong>
+                                <span>TikTok · Reels · Shorts</span>
+                                <small>Coming soon</small>
+                            </div>
+
+                            <div className="clip-export-format clip-export-format-selected">
+                                <span className="clip-export-format-icon">▣</span>
+                                <strong>Original · MP4</strong>
+                                <span>Keep original quality</span>
+                                <small>Available for local MP4 files</small>
+                            </div>
+                        </div>
+
+                        <a
+                            className="clip-export-download"
+                            href={clipToExport.videoUrl}
+                            download={`clutchmetrics-clip-${clipToExport.id}.mp4`}
+                        >
+                            ↓ Download original
+                        </a>
+
+                        <p className="clip-export-note">
+                            Original MP4 download is supported for videos hosted
+                            locally by ClutchMetrics. Vertical export will be
+                            available in a future update.
+                        </p>
+                    </div>
                 </div>
             )}
 

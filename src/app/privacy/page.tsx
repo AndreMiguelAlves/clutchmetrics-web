@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "../legal.module.css";
 import SiteFooter from "@/components/SiteFooter";
+import AuthAwareContent from "@/components/AuthAwareContent";
 
 export default function PrivacyPage() {
     return (
@@ -23,9 +24,20 @@ export default function PrivacyPage() {
                     </div>
                 </Link>
 
-                <Link href="/login" className={styles.loginLink}>
-                    Sign in →
-                </Link>
+
+                <AuthAwareContent
+                    guest={
+                        <Link href="/login" className={styles.loginLink}>
+                            Sign in →
+                        </Link>
+                    }
+                    authenticated={
+                        <Link href="/dashboard" className={styles.loginLink}>
+                            Dashboard →
+                        </Link>
+                    }
+                />
+
             </header>
 
             <article className={styles.container}>

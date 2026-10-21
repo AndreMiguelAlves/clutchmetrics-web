@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./help.module.css";
 import SiteFooter from "@/components/SiteFooter";
+import AuthAwareContent from "@/components/AuthAwareContent";
 
 const faqs = [
     {
@@ -66,9 +67,20 @@ export default function AboutPage() {
                     </div>
                 </Link>
 
-                <Link href="/login" className={styles.loginLink}>
-                    Sign in →
-                </Link>
+
+                <AuthAwareContent
+                    guest={
+                        <Link href="/login" className={styles.loginLink}>
+                            Sign in →
+                        </Link>
+                    }
+                    authenticated={
+                        <Link href="/dashboard" className={styles.loginLink}>
+                            Dashboard →
+                        </Link>
+                    }
+                />
+
             </header>
 
             <div className={styles.container}>

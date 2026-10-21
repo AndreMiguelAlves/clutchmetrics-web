@@ -2858,6 +2858,13 @@ a {
 
   background: #090d13;
   border-right: 1px solid #1d2532;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+
+  scrollbar-width: thin;
+  scrollbar-color: #303a54 #090d13;
 }
 
   .shared-brand {
@@ -3009,6 +3016,7 @@ a {
     .shared-page-content {
       padding: 28px 24px;
     }
+
   }
 
   /* =========================================================

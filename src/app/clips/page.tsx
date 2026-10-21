@@ -6,6 +6,8 @@ import AppShell from "../../components/AppShell";
 import { authenticatedFetch } from "../../lib/api";
 import VideoFrameThumbnail from "@/components/VideoFrameThumbnail";
 import ClipToast from "@/components/ClipToast";
+import VideoEditor from "@/components/VideoEditor";
+import MyEditedVideos from "@/components/MyEditedVideos";
 
 const clipGameImages: Record<string, string> = {
     "League of Legends": "/games/lol.png",
@@ -489,6 +491,11 @@ export default function ClipsPage() {
                             : "+ New clip"}
                     </button>
                 </header>
+
+
+                <VideoEditor />
+                <MyEditedVideos />
+
 
                 {showForm && (
                     <section className="clip-create-panel">

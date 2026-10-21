@@ -596,8 +596,12 @@ export default function FeedPage() {
                                         />
                                     )}
 
+
                                     {clip.videoUrl &&
-                                        /\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(clip.videoUrl) && (
+                                        (
+                                            /\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(clip.videoUrl) ||
+                                            /^http:\/\/localhost:8080\/api\/clips\/\d+\/video(?:[?#].*)?$/i.test(clip.videoUrl)
+                                        ) && (
                                             <video
                                                 key={clip.id}
                                                 className="feed-video-player"
@@ -609,6 +613,7 @@ export default function FeedPage() {
                                                 Your browser does not support video playback.
                                             </video>
                                         )}
+
 
                                     {clip.durationSeconds != null && (
                                         <small>
@@ -849,9 +854,12 @@ export default function FeedPage() {
                 {clip.gameName ?? "No game"}
               </span>
 
-                                                <small>
-                                                    {clip.durationSeconds ?? 0}s
-                                                </small>
+                                                {clip.durationSeconds != null &&
+                                                    clip.durationSeconds > 0 && (
+                                                        <small>
+                                                            {clip.durationSeconds}s
+                                                        </small>
+                                                    )}
                                             </div>
                                         </button>
                                     ))}

@@ -2,29 +2,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authenticatedFetch } from "@/lib/api";
 
 interface VideoFrameThumbnailProps {
   videoUrl: string | null;
+  requiresAuth?: boolean;
 }
 
 export default function VideoFrameThumbnail({
-  videoUrl,
-}: VideoFrameThumbnailProps) {
+                                              videoUrl,
+                                              requiresAuth = false,
+                                            }: VideoFrameThumbnailProps) {
   const [frame, setFrame] = useState<{
     videoUrl: string;
     image: string;
   } | null>(null);
 
+
   useEffect(() => {
     if (
-      !videoUrl ||
-      !/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(videoUrl)
+        !videoUrl ||
+        !/(?:\.(?:mp4|webm|ogg)|\/api\/clips\/\d+\/video)(?:[?#].*)?$/i.test(videoUrl)
     ) {
       return;
     }
+    const safeVideoUrl = videoUrl;
+
 
     const video = document.createElement("video");
     let cancelled = false;
+    let objectUrl: string | null = null;
 
     video.preload = "auto";
     video.muted = true;
@@ -81,17 +88,54 @@ export default function VideoFrameThumbnail({
       }
     };
 
-    video.src = videoUrl;
-    video.load();
+
+    async function loadVideo() {
+      try {
+        if (requiresAuth) {
+          const response = await authenticatedFetch(safeVideoUrl);
+
+          if (!response.ok) {
+            return;
+          }
+
+          const blob = await response.blob();
+
+          if (cancelled) {
+            return;
+          }
+
+          objectUrl = URL.createObjectURL(blob);
+          video.src = objectUrl;
+        } else {
+          video.src = safeVideoUrl;
+        }
+
+        if (!cancelled) {
+          video.load();
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Could not load video thumbnail:", error);
+        }
+      }
+    }
+
+    void loadVideo();
 
     return () => {
       cancelled = true;
+
       video.onloadedmetadata = null;
       video.onseeked = null;
       video.removeAttribute("src");
       video.load();
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
-  }, [videoUrl]);
+  }, [videoUrl, requiresAuth]);
+
 
   if (!frame || frame.videoUrl !== videoUrl) {
     return null;

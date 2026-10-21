@@ -53,14 +53,17 @@ const menuItems = [
     icon: Gamepad2,
   },
 
-];
-
-const communityItems = [
   {
-    label: "Clips",
+    label: "Creator Studio",
     href: "/clips",
     icon: Clapperboard,
   },
+
+
+];
+
+
+const communityItems = [
   {
     label: "Feed",
     href: "/feed",
@@ -72,6 +75,7 @@ const communityItems = [
     icon: Trophy,
   },
 ];
+
 
 const accountItems = [
   {

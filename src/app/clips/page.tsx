@@ -51,6 +51,25 @@ function isLocalMp4(videoUrl: string | null | undefined): boolean {
 }
 
 
+function isProcessedClipVideo(
+    videoUrl: string | null | undefined
+): boolean {
+    if (!videoUrl) return false;
+
+    try {
+        const url = new URL(videoUrl);
+
+        return (
+            url.origin === "http://localhost:8080" &&
+            /^\/api\/clips\/\d+\/video$/.test(url.pathname)
+        );
+    } catch {
+        return false;
+    }
+}
+
+
+
 export default function ClipsPage() {
     const router = useRouter();
 
@@ -94,9 +113,13 @@ export default function ClipsPage() {
     const [clipToDelete, setClipToDelete] = useState<ClipResponse | null>(null);
     const [clipToExport, setClipToExport] =
         useState<ClipResponse | null>(null);
+    const [downloadingClipId, setDownloadingClipId] =
+        useState<number | null>(null);
     const [clipSearch, setClipSearch] = useState("");
     const [visibilityFilter, setVisibilityFilter] = useState("ALL");
     const [statusFilter, setStatusFilter] = useState("ALL");
+    const [activeEditorVideoId, setActiveEditorVideoId] =
+        useState<number | null>(null);
 
 
 
@@ -183,8 +206,26 @@ export default function ClipsPage() {
             }
         }
 
+
         void fetchClips();
+
+        const handleClipCreated = () => {
+            void fetchClips();
+        };
+
+        window.addEventListener(
+            "clutchmetrics:clip-created",
+            handleClipCreated
+        );
+
+        return () => {
+            window.removeEventListener(
+                "clutchmetrics:clip-created",
+                handleClipCreated
+            );
+        };
     }, [router]);
+
 
     async function handleCreateClip() {
 
@@ -428,6 +469,60 @@ export default function ClipsPage() {
     }
 
 
+    async function handleDownloadProcessedClip(
+        clip: ClipResponse
+    ) {
+        setDownloadingClipId(clip.id);
+        setError("");
+
+        try {
+            const response = await authenticatedFetch(
+                clip.videoUrl
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Could not download the clip."
+                );
+            }
+
+            const blob = await response.blob();
+            const downloadUrl = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = downloadUrl;
+            link.download = `clutchmetrics-clip-${clip.id}.mp4`;
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.setTimeout(() => {
+                URL.revokeObjectURL(downloadUrl);
+            }, 1000);
+
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (
+                    error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN"
+                )
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setError("Could not export the clip.");
+
+        } finally {
+            setDownloadingClipId(null);
+        }
+    }
+
+
     function formatDate(value: string) {
         return new Date(value).toLocaleString(
             "en-GB",
@@ -463,7 +558,7 @@ export default function ClipsPage() {
 
 
     return (
-        <AppShell title="Clips">
+        <AppShell title="Creator Studio">
             <div className="clips-page">
 
                 <header className="clips-header">
@@ -472,34 +567,48 @@ export default function ClipsPage() {
                             CREATOR STUDIO
                         </p>
 
-                        <h1>My clips</h1>
+                        <h1>Creator Studio</h1>
 
                         <p>
-                            Create, process and publish your
-                            competitive highlights.
+                            Edit your gameplay, manage your videos
+                            and publish competitive highlights.
+                        </p>
+                    </div>
+                </header>
+
+
+                <VideoEditor
+                    onActiveVideoChange={setActiveEditorVideoId}
+                />
+
+                <MyEditedVideos
+                    activeEditorVideoId={activeEditorVideoId}
+                />
+
+
+
+
+
+                <div className="clips-library-heading">
+                    <div>
+                        <h2>My Clips</h2>
+                        <p>
+                            Manage, publish and export your highlights.
                         </p>
                     </div>
 
                     <button
+                        type="button"
                         className="clips-create-button"
-                        onClick={() =>
-                            setShowForm(!showForm)
-                        }
+                        onClick={() => setShowForm(!showForm)}
                     >
-                        {showForm
-                            ? "Cancel"
-                            : "+ New clip"}
+                        {showForm ? "Cancel" : "+ Add from URL"}
                     </button>
-                </header>
-
-
-                <VideoEditor />
-                <MyEditedVideos />
-
+                </div>
 
                 {showForm && (
                     <section className="clip-create-panel">
-                        <h2>Create clip</h2>
+                        <h2>Create clip from URL</h2>
 
                         <div className="clip-form-grid">
 
@@ -515,7 +624,7 @@ export default function ClipsPage() {
                                     }
                                 >
                                     <option value="">
-                                        No game
+                                        Select a game
                                     </option>
 
                                     <option value="LEAGUE_OF_LEGENDS">
@@ -718,7 +827,15 @@ export default function ClipsPage() {
   </span>
 </span>
 
-                                    <VideoFrameThumbnail videoUrl={clip.videoUrl} />
+
+                                    <VideoFrameThumbnail
+                                        videoUrl={clip.videoUrl}
+                                        requiresAuth={
+                                            clip.visibility === "PRIVATE" &&
+                                            isProcessedClipVideo(clip.videoUrl)
+                                        }
+                                    />
+
 
                                     {clip.thumbnailUrl && (
                                         <img
@@ -778,22 +895,27 @@ export default function ClipsPage() {
                                     </div>
                                     <div className="clip-actions">
 
-                                        {clip.status === "UPLOADED" && (
-                                            <button
-                                                type="button"
-                                                disabled={actionClipId === clip.id}
-                                                onClick={() =>
-                                                    handleClipAction(
-                                                        clip.id,
-                                                        "process"
-                                                    )
-                                                }
-                                            >
-                                                {actionClipId === clip.id
-                                                    ? "Processing..."
-                                                    : "Process clip"}
-                                            </button>
-                                        )}
+
+                                        {clip.status === "READY" &&
+                                            (
+                                                isLocalMp4(clip.videoUrl) ||
+                                                isProcessedClipVideo(clip.videoUrl)
+                                            ) && (
+                                                <button
+                                                    type="button"
+                                                    className="clip-export-button"
+                                                    disabled={
+                                                        actionClipId === clip.id ||
+                                                        downloadingClipId === clip.id
+                                                    }
+                                                    onClick={() => setClipToExport(clip)}
+                                                >
+                                                    {downloadingClipId === clip.id
+                                                        ? "Exporting..."
+                                                        : "Export"}
+                                                </button>
+                                            )}
+
 
                                         {clip.status === "READY" &&
                                             clip.visibility === "PRIVATE" && (
@@ -831,19 +953,6 @@ export default function ClipsPage() {
                                                         : "Unpublish"}
                                                 </button>
                                             )}
-
-
-                                        {clip.status === "READY" && isLocalMp4(clip.videoUrl) && (
-                                            <button
-                                                type="button"
-                                                className="clip-export-button"
-                                                disabled={actionClipId === clip.id}
-                                                onClick={() => setClipToExport(clip)}
-                                            >
-                                                Export
-                                            </button>
-                                        )}
-
 
 
                                         <button
@@ -978,34 +1087,66 @@ export default function ClipsPage() {
                             Export format
                         </h3>
 
-                        <div className="clip-export-formats">
-                            <div className="clip-export-format clip-export-format-future">
-                                <span className="clip-export-format-icon">▯</span>
-                                <strong>Vertical · 9:16</strong>
-                                <span>TikTok · Reels · Shorts</span>
-                                <small>Coming soon</small>
-                            </div>
 
-                            <div className="clip-export-format clip-export-format-selected">
-                                <span className="clip-export-format-icon">▣</span>
-                                <strong>Original · MP4</strong>
-                                <span>Keep original quality</span>
-                                <small>Available for local MP4 files</small>
-                            </div>
+                        <div className="clip-export-formats">
+                            {isProcessedClipVideo(clipToExport.videoUrl) ? (
+                                <div
+                                    className="clip-export-format clip-export-format-selected"
+                                    style={{ gridColumn: "1 / -1" }}
+                                >
+                                    <span className="clip-export-format-icon">▯</span>
+                                    <strong>Vertical · 9:16</strong>
+                                    <span>MP4 · TikTok · Reels · Shorts</span>
+                                    <small>Ready to download</small>
+                                </div>
+                            ) : (
+                                <div
+                                    className="clip-export-format clip-export-format-selected"
+                                    style={{ gridColumn: "1 / -1" }}
+                                >
+                                    <span className="clip-export-format-icon">▣</span>
+                                    <strong>Original · MP4</strong>
+                                    <span>Keep original quality</span>
+                                    <small>Ready to download</small>
+                                </div>
+                            )}
                         </div>
 
-                        <a
-                            className="clip-export-download"
-                            href={clipToExport.videoUrl}
-                            download={`clutchmetrics-clip-${clipToExport.id}.mp4`}
-                        >
-                            ↓ Download original
-                        </a>
+
+
+                        {isProcessedClipVideo(clipToExport.videoUrl) ? (
+                            <button
+                                type="button"
+                                className="clip-export-download"
+                                style={{
+                                    width: "100%",
+                                    border: "none",
+                                    cursor: "pointer",
+                                }}
+                                disabled={downloadingClipId === clipToExport.id}
+                                onClick={() =>
+                                    void handleDownloadProcessedClip(clipToExport)
+                                }
+                            >
+                                {downloadingClipId === clipToExport.id
+                                    ? "Exporting..."
+                                    : "↓ Download vertical MP4"}
+                            </button>
+                        ) : (
+                            <a
+                                className="clip-export-download"
+                                href={clipToExport.videoUrl}
+                                download={`clutchmetrics-clip-${clipToExport.id}.mp4`}
+                            >
+                                ↓ Download original MP4
+                            </a>
+                        )}
+
 
                         <p className="clip-export-note">
-                            Original MP4 download is supported for videos hosted
-                            locally by ClutchMetrics. Vertical export will be
-                            available in a future update.
+                            {isProcessedClipVideo(clipToExport.videoUrl)
+                                ? "Your vertical MP4 is ready to share on TikTok, Instagram Reels or YouTube Shorts."
+                                : "Download your original MP4 file without additional processing."}
                         </p>
                     </div>
                 </div>

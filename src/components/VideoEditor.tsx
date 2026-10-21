@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authenticatedFetch } from "@/lib/api";
+import ClipToast from "@/components/ClipToast";
 
 interface VideoUploadResponse {
     id: number;
@@ -13,7 +14,13 @@ interface VideoUploadResponse {
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
-export default function VideoEditor() {
+interface VideoEditorProps {
+    onActiveVideoChange: (videoId: number | null) => void;
+}
+
+export default function VideoEditor({
+                                        onActiveVideoChange,
+                                    }: VideoEditorProps) {
     const router = useRouter();
 
     const [selectedFile, setSelectedFile] =
@@ -36,6 +43,7 @@ export default function VideoEditor() {
         useState<string | null>(null);
 
     const [error, setError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     useEffect(() => {
         return () => {
@@ -51,7 +59,9 @@ export default function VideoEditor() {
         const file = event.target.files?.[0] ?? null;
 
         setError("");
+        setSuccessMessage("");
         setUploadedVideo(null);
+        onActiveVideoChange(null);
         setProcessedVideo(null);
         setSelectedFile(null);
         setPreviewUrl(null);
@@ -80,6 +90,7 @@ export default function VideoEditor() {
 
         setUploading(true);
         setError("");
+        setSuccessMessage("");
 
         try {
             const formData = new FormData();
@@ -106,6 +117,13 @@ export default function VideoEditor() {
                 await response.json();
 
             setUploadedVideo(data);
+            onActiveVideoChange(data.id);
+            window.dispatchEvent(
+                new Event("clutchmetrics:video-updated")
+            );
+            setSuccessMessage(
+                "Video uploaded successfully. Select an interval to continue."
+            );
 
         } catch (error) {
             console.error(error);
@@ -157,6 +175,7 @@ export default function VideoEditor() {
 
         setProcessing(true);
         setError("");
+        setSuccessMessage("");
 
         try {
             const response = await authenticatedFetch(
@@ -186,6 +205,12 @@ export default function VideoEditor() {
             } = await response.json();
 
             setProcessedVideo(data.processedFileName);
+            window.dispatchEvent(
+                new Event("clutchmetrics:video-updated")
+            );
+            setSuccessMessage(
+                "Your vertical video is ready! You can preview or download it."
+            );
 
         } catch (error) {
             console.error(error);
@@ -324,13 +349,34 @@ export default function VideoEditor() {
 
 
     return (
-        <section className="clip-create-panel">
-            <h2>Video Editor</h2>
 
-            <p>
-                Upload your gameplay and create vertical
-                highlights for Shorts, Reels and TikTok.
-            </p>
+        <section className="clip-create-panel video-editor-panel">
+            <div className="video-editor-heading">
+                <div>
+            <span className="video-editor-eyebrow">
+                CLUTCHMETRICS STUDIO
+            </span>
+
+                    <h2>Video Editor</h2>
+
+                    <p>
+                        Turn your gameplay into vertical highlights
+                        ready for Shorts, Reels and TikTok.
+                    </p>
+                </div>
+
+                <div className="video-editor-format">
+            <span className="video-editor-format-icon">
+                ▯
+            </span>
+
+                    <div>
+                        <strong>Vertical 9:16</strong>
+                        <small>720 × 1280 · MP4</small>
+                    </div>
+                </div>
+            </div>
+
 
             <div className="clip-form-grid">
                 <div className="profile-field clip-form-full">
@@ -338,32 +384,37 @@ export default function VideoEditor() {
                         Source video
                     </label>
 
+
                     <input
                         id="video-editor-file"
                         type="file"
                         accept=".mp4,video/mp4"
+                        className="video-editor-hidden-file"
                         onChange={handleFileChange}
                         disabled={uploading || processing || previewing}
                     />
+
+                    <label
+                        htmlFor="video-editor-file"
+                        className="video-editor-file-picker"
+                    >
+    <span className="video-editor-choose-file">
+        ↑ Choose MP4
+    </span>
+
+                        <span className="video-editor-file-name">
+        {selectedFile
+            ? selectedFile.name
+            : "No file selected"}
+    </span>
+                    </label>
+
 
                     <small>
                         MP4 format · Maximum 100 MB
                     </small>
                 </div>
             </div>
-
-            {error && (
-                <p role="alert">
-                    {error}
-                </p>
-            )}
-
-            {uploadedVideo && (
-                <p role="status">
-                    Video uploaded successfully!
-                    {" "}Video ID: {uploadedVideo.id}
-                </p>
-            )}
 
 
             {uploadedVideo && (
@@ -422,10 +473,6 @@ export default function VideoEditor() {
 
             {processedVideo && (
                 <div>
-                    <p role="status">
-                        Video processed successfully! Your
-                        vertical MP4 is ready.
-                    </p>
 
                     <button
                         type="button"
@@ -486,6 +533,23 @@ export default function VideoEditor() {
                         : "Upload video"}
                 </button>
             </div>
+
+            {error && (
+                <ClipToast
+                    message={error}
+                    type="error"
+                    onClose={() => setError("")}
+                />
+            )}
+
+            {successMessage && (
+                <ClipToast
+                    message={successMessage}
+                    type="success"
+                    onClose={() => setSuccessMessage("")}
+                />
+            )}
+
         </section>
     );
 }

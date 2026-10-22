@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authenticatedFetch } from "@/lib/api";
@@ -25,7 +25,8 @@ export default function VideoEditor({
 
     const [selectedFile, setSelectedFile] =
         useState<File | null>(null);
-
+    const [sourcePreviewUrl, setSourcePreviewUrl] =
+        useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
 
     const [uploadedVideo, setUploadedVideo] =
@@ -44,6 +45,7 @@ export default function VideoEditor({
 
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const sourceVideoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         return () => {
@@ -52,6 +54,100 @@ export default function VideoEditor({
             }
         };
     }, [previewUrl]);
+
+
+    useEffect(() => {
+        if (!sourcePreviewUrl) {
+            return;
+        }
+
+        return () => {
+            URL.revokeObjectURL(sourcePreviewUrl);
+        };
+    }, [sourcePreviewUrl]);
+
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function resumeVideo(
+            videoId: number,
+            fileName: string
+        ) {
+            try {
+                const response = await authenticatedFetch(
+                    `http://localhost:8080/api/clips/videos/${videoId}/original`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Could not load the original video.");
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                if (cancelled) {
+                    URL.revokeObjectURL(url);
+                    return;
+                }
+
+                setSelectedFile(null);
+                setUploadedVideo({
+                    id: videoId,
+                    fileName,
+                });
+
+                setSourcePreviewUrl(url);
+                setPreviewUrl(null);
+                setProcessedVideo(null);
+
+                setStartSeconds("0");
+                setEndSeconds("5");
+
+                onActiveVideoChange(videoId);
+                setError("");
+                setSuccessMessage("");
+
+                document.querySelector(".video-editor-panel")
+                    ?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                    });
+
+            } catch (error) {
+                if (!cancelled) {
+                    console.error(error);
+                    setError("Could not resume video editing.");
+                }
+            }
+        }
+
+        const handleResumeEditing = (event: Event) => {
+            const detail = (
+                event as CustomEvent<{
+                    id: number;
+                    fileName: string;
+                }>
+            ).detail;
+
+            void resumeVideo(detail.id, detail.fileName);
+        };
+
+        window.addEventListener(
+            "clutchmetrics:resume-editing",
+            handleResumeEditing
+        );
+
+        return () => {
+            cancelled = true;
+
+            window.removeEventListener(
+                "clutchmetrics:resume-editing",
+                handleResumeEditing
+            );
+        };
+    }, [onActiveVideoChange]);
+
 
     function handleFileChange(
         event: ChangeEvent<HTMLInputElement>
@@ -65,6 +161,7 @@ export default function VideoEditor({
         setProcessedVideo(null);
         setSelectedFile(null);
         setPreviewUrl(null);
+        setSourcePreviewUrl(null);
 
         if (!file) {
             return;
@@ -81,6 +178,7 @@ export default function VideoEditor({
         }
 
         setSelectedFile(file);
+        setSourcePreviewUrl(URL.createObjectURL(file));
     }
 
     async function handleUpload() {
@@ -122,7 +220,7 @@ export default function VideoEditor({
                 new Event("clutchmetrics:video-updated")
             );
             setSuccessMessage(
-                "Video uploaded successfully. Select an interval to continue."
+                "Video uploaded successfully. Click Process Video to create your highlight."
             );
 
         } catch (error) {
@@ -405,7 +503,7 @@ export default function VideoEditor({
                         <span className="video-editor-file-name">
         {selectedFile
             ? selectedFile.name
-            : "No file selected"}
+            : uploadedVideo?.fileName ?? "No file selected"}
     </span>
                     </label>
 
@@ -415,6 +513,80 @@ export default function VideoEditor({
                     </small>
                 </div>
             </div>
+
+            {sourcePreviewUrl && (
+                <div className="video-editor-source-preview">
+                    <h3>Original video preview</h3>
+
+                    <p>
+                        Review your gameplay before selecting
+                        the start and end of your highlight.
+                    </p>
+
+                    <video
+                        ref={sourceVideoRef}
+                        src={sourcePreviewUrl}
+                        controls
+                        playsInline
+                        preload="metadata"
+                    >
+                        Your browser does not support video playback.
+                    </video>
+
+                    <div className="video-editor-timeline-actions">
+                        <button
+                            type="button"
+                            className="profile-save-button"
+                            onClick={() => {
+                                if (!sourceVideoRef.current) return;
+
+                                const seconds = Math.floor(
+                                    sourceVideoRef.current.currentTime
+                                );
+
+                                setStartSeconds(String(seconds));
+                            }}
+                        >
+                            Set Start
+                        </button>
+
+                        <button
+                            type="button"
+                            className="profile-save-button"
+                            onClick={() => {
+                                if (!sourceVideoRef.current) return;
+
+                                const seconds = Math.max(
+                                    1,
+                                    Math.ceil(sourceVideoRef.current.currentTime)
+                                );
+
+                                setEndSeconds(String(seconds));
+                            }}
+                        >
+                            Set End
+                        </button>
+                    </div>
+
+
+                    <div className="video-editor-selected-range">
+    <span>
+        Start: <strong>{startSeconds}s</strong>
+    </span>
+
+                        <span>
+        End: <strong>{endSeconds}s</strong>
+    </span>
+
+                        <span>
+        Duration: <strong>
+            {Number(endSeconds) - Number(startSeconds)}s
+        </strong>
+    </span>
+                    </div>
+
+                </div>
+            )}
 
 
             {uploadedVideo && (

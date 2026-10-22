@@ -111,8 +111,27 @@ export default function ClipsPage() {
     const [actionClipId, setActionClipId] =
         useState<number | null>(null);
     const [clipToDelete, setClipToDelete] = useState<ClipResponse | null>(null);
+
+    const [clipToChangeVisibility, setClipToChangeVisibility] =
+        useState<{
+            clip: ClipResponse;
+            action: "publish" | "unpublish";
+        } | null>(null);
+
     const [clipToExport, setClipToExport] =
         useState<ClipResponse | null>(null);
+
+    const [clipToPreview, setClipToPreview] =
+        useState<ClipResponse | null>(null);
+    const [previewVideoUrl, setPreviewVideoUrl] =
+        useState<string | null>(null);
+
+    const [previewLoading, setPreviewLoading] =
+        useState(false);
+
+    const [previewError, setPreviewError] =
+        useState("");
+
     const [downloadingClipId, setDownloadingClipId] =
         useState<number | null>(null);
     const [clipSearch, setClipSearch] = useState("");
@@ -120,6 +139,106 @@ export default function ClipsPage() {
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [activeEditorVideoId, setActiveEditorVideoId] =
         useState<number | null>(null);
+
+
+
+    useEffect(() => {
+        const selectedClip = clipToPreview;
+
+
+        if (!selectedClip) {
+            return;
+        }
+        const clip = selectedClip;
+
+
+        let cancelled = false;
+        let objectUrl: string | null = null;
+
+        async function loadClipPreview() {
+            setPreviewLoading(true);
+            setPreviewError("");
+            setPreviewVideoUrl(null);
+
+            try {
+                const url = new URL(
+                    clip.videoUrl,
+                    window.location.origin
+                );
+
+
+                const isBackendVideo =
+                    url.origin === "http://localhost:8080" &&
+                    /^\/api\/clips\/\d+\/video$/.test(url.pathname);
+
+                if (isBackendVideo) {
+                    // Permite reproduzir também Clips privados.
+                    const response = await authenticatedFetch(
+                        url.toString()
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            "Could not load this clip's video."
+                        );
+                    }
+
+                    const blob = await response.blob();
+
+                    if (cancelled) return;
+
+                    objectUrl = URL.createObjectURL(blob);
+                    setPreviewVideoUrl(objectUrl);
+
+                } else if (/\.(mp4|webm|ogg)$/i.test(url.pathname)) {
+                    // Vídeos MP4 antigos ou adicionados por URL.
+                    if (!cancelled) {
+                        setPreviewVideoUrl(url.toString());
+                    }
+
+                } else {
+                    throw new Error(
+                        "This clip does not have a playable video."
+                    );
+                }
+
+            } catch (error) {
+                if (cancelled) return;
+
+                if (
+                    error instanceof Error &&
+                    (
+                        error.message === "SESSION_EXPIRED" ||
+                        error.message === "NO_ACCESS_TOKEN"
+                    )
+                ) {
+                    router.replace("/login");
+                    return;
+                }
+
+                setPreviewError(
+                    error instanceof Error
+                        ? error.message
+                        : "Could not load the video."
+                );
+
+            } finally {
+                if (!cancelled) {
+                    setPreviewLoading(false);
+                }
+            }
+        }
+
+        void loadClipPreview();
+
+        return () => {
+            cancelled = true;
+
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        };
+    }, [clipToPreview, router]);
 
 
 
@@ -896,6 +1015,18 @@ export default function ClipsPage() {
                                     <div className="clip-actions">
 
 
+                                        {clip.status === "READY" && clip.videoUrl && (
+                                            <button
+                                                type="button"
+                                                className="clip-export-button"
+                                                disabled={actionClipId === clip.id}
+                                                onClick={() => setClipToPreview(clip)}
+                                            >
+                                                Preview
+                                            </button>
+                                        )}
+
+
                                         {clip.status === "READY" &&
                                             (
                                                 isLocalMp4(clip.videoUrl) ||
@@ -924,10 +1055,10 @@ export default function ClipsPage() {
                                                     className="clip-primary-action"
                                                     disabled={actionClipId === clip.id}
                                                     onClick={() =>
-                                                        handleClipAction(
-                                                            clip.id,
-                                                            "publish"
-                                                        )
+                                                        setClipToChangeVisibility({
+                                                            clip,
+                                                            action: "publish",
+                                                        })
                                                     }
                                                 >
                                                     {actionClipId === clip.id
@@ -942,10 +1073,10 @@ export default function ClipsPage() {
                                                     type="button"
                                                     disabled={actionClipId === clip.id}
                                                     onClick={() =>
-                                                        handleClipAction(
-                                                            clip.id,
-                                                            "unpublish"
-                                                        )
+                                                        setClipToChangeVisibility({
+                                                            clip,
+                                                            action: "unpublish",
+                                                        })
                                                     }
                                                 >
                                                     {actionClipId === clip.id
@@ -971,6 +1102,152 @@ export default function ClipsPage() {
                 )}
 
             </div>
+
+
+            {/* JANELA DE PREVIEW DO CLIP */}
+            {clipToPreview && (
+                <div className="clip-export-overlay">
+                    <div
+                        className="clip-export-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="clip-preview-title"
+                    >
+                        <div className="clip-export-header">
+                            <h2 id="clip-preview-title">
+                                Preview Clip
+                            </h2>
+
+                            <button
+                                type="button"
+                                className="clip-export-close"
+                                onClick={() => setClipToPreview(null)}
+                                aria-label="Close preview"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div style={{ padding: "24px" }}>
+                            <h3 style={{ marginBottom: "16px" }}>
+                                {clipToPreview.title}
+                            </h3>
+
+                            {previewLoading && (
+                                <p>Loading video...</p>
+                            )}
+
+                            {previewError && (
+                                <p
+                                    role="alert"
+                                    style={{ color: "#fb7185" }}
+                                >
+                                    {previewError}
+                                </p>
+                            )}
+
+                            {previewVideoUrl && !previewLoading && (
+                                <video
+                                    key={previewVideoUrl}
+                                    src={previewVideoUrl}
+                                    controls
+                                    playsInline
+                                    preload="metadata"
+                                    onError={() =>
+                                        setPreviewError(
+                                            "This video could not be played."
+                                        )
+                                    }
+                                    style={{
+                                        display: "block",
+                                        width: "100%",
+                                        maxHeight: "65vh",
+                                        background: "#000",
+                                        borderRadius: "12px",
+                                        objectFit: "contain",
+                                    }}
+                                >
+                                    Your browser does not support video playback.
+                                </video>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+            {/* JANELA DE CONFIRMAÇÃO PUBLISH / UNPUBLISH */}
+            {clipToChangeVisibility && (
+                <div className="clip-delete-modal-overlay">
+                    <div
+                        className="clip-delete-modal"
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="visibility-confirm-title"
+                        aria-describedby="visibility-confirm-description"
+                    >
+                        <div className="clip-delete-modal-icon">
+                            !
+                        </div>
+
+                        <h2 id="visibility-confirm-title">
+                            {clipToChangeVisibility.action === "publish"
+                                ? "Publish clip?"
+                                : "Unpublish clip?"}
+                        </h2>
+
+                        <p id="visibility-confirm-description">
+                            Are you sure you want to{" "}
+                            {clipToChangeVisibility.action === "publish"
+                                ? "publish"
+                                : "unpublish"}{" "}
+                            <strong>
+                                &quot;{clipToChangeVisibility.clip.title}&quot;
+                            </strong>
+                            ?
+                        </p>
+
+                        <p className="clip-delete-warning">
+                            {clipToChangeVisibility.action === "publish"
+                                ? "This clip will become visible to everyone in the community Feed."
+                                : "This clip will be removed from the public Feed and become private."}
+                        </p>
+
+                        <div className="clip-delete-modal-actions">
+                            <button
+                                type="button"
+                                className="clip-delete-cancel"
+                                onClick={() =>
+                                    setClipToChangeVisibility(null)
+                                }
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                className="clip-delete-confirm"
+                                onClick={() => {
+                                    const { clip, action } =
+                                        clipToChangeVisibility;
+
+                                    setClipToChangeVisibility(null);
+
+                                    void handleClipAction(
+                                        clip.id,
+                                        action
+                                    );
+                                }}
+                            >
+                                {clipToChangeVisibility.action === "publish"
+                                    ? "Publish clip"
+                                    : "Unpublish clip"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* JANELA DE CONFIRMAÇÃO DELETE */}
             {clipToDelete && (

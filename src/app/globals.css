@@ -8066,6 +8066,72 @@ button.clip-delete-button:disabled {
 }
 
 
+/* CREATOR STUDIO - ORIGINAL VIDEO PREVIEW */
+
+.video-editor-source-preview {
+  margin-top: 22px;
+  margin-bottom: 22px;
+  padding: 20px;
+  background: #0b101b;
+  border: 1px solid #303a52;
+  border-radius: 12px;
+}
+
+.video-editor-source-preview h3 {
+  margin: 0 0 8px;
+  color: #f4f6ff;
+  font-size: 18px;
+}
+
+.video-editor-source-preview p {
+  margin: 0 0 16px;
+  color: #a4b3ce;
+  font-size: 14px;
+}
+
+.video-editor-source-preview video {
+  display: block;
+  width: 100%;
+  max-height: 380px;
+  background: #000;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+
+/* VIDEO EDITOR - TIMELINE ACTIONS */
+
+.video-editor-timeline-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.video-editor-timeline-actions button {
+  min-width: 120px;
+}
+
+.video-editor-selected-range {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #141b2b;
+  border: 1px solid #303a52;
+  border-radius: 9px;
+  color: #a4b3ce;
+  font-size: 14px;
+}
+
+.video-editor-selected-range strong {
+  color: #ffffff;
+}
+
+
+
 
 
 

@@ -39,25 +39,22 @@ export default function MyEditedVideos({
         url: string;
     } | null>(null);
 
-    const [processingId, setProcessingId] =
-        useState<number | null>(null);
-
     const [selectedVideoForClip, setSelectedVideoForClip] =
         useState<number | null>(null);
 
     const [clipTitle, setClipTitle] = useState("");
     const [clipDescription, setClipDescription] = useState("");
-    const [clipGameCode, setClipGameCode] =
-        useState("LEAGUE_OF_LEGENDS");
+    const [clipGameCode, setClipGameCode] = useState("");
     const [creatingClip, setCreatingClip] = useState(false);
     const [clipCreateError, setClipCreateError] = useState("");
     const [clipCreateSuccess, setClipCreateSuccess] = useState("");
-
-
-    const [videoRanges, setVideoRanges] = useState<
-        Record<number, { start: string; end: string }>
-    >({});
-
+    const [videoToDelete, setVideoToDelete] =
+        useState<VideoAssetResponse | null>(null);
+    const [deletingVideoId, setDeletingVideoId] =
+        useState<number | null>(null);
+    const [videoDeleteError, setVideoDeleteError] =
+        useState("");
+    const [videoDeleteSuccess, setVideoDeleteSuccess] = useState("");
 
     useEffect(() => {
         async function loadVideos() {
@@ -252,92 +249,6 @@ export default function MyEditedVideos({
         }
     }
 
-
-    async function handleProcessVideo(videoId: number) {
-        if (processingId !== null) {
-            return;
-        }
-
-        const range = videoRanges[videoId] ?? {
-            start: "0",
-            end: "5",
-        };
-
-        const start = Number(range.start);
-        const end = Number(range.end);
-
-        if (
-            range.start.trim() === "" ||
-            range.end.trim() === "" ||
-            !Number.isInteger(start) ||
-            !Number.isInteger(end) ||
-            start < 0 ||
-            end <= start ||
-            end - start > 60
-        ) {
-            setError("Select a valid interval of up to 60 seconds.");
-            return;
-        }
-
-        setProcessingId(videoId);
-        setError("");
-
-        try {
-            const response = await authenticatedFetch(
-                `http://localhost:8080/api/clips/videos/${videoId}/process`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        startSeconds: start,
-                        endSeconds: end,
-                    }),
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error(
-                    "Could not process the video. Check the selected interval."
-                );
-            }
-
-            // Atualizar o histórico sem precisar de F5
-            setVideos((current) =>
-                current.map((video) =>
-                    video.id === videoId
-                        ? { ...video, processed: true }
-                        : video
-                )
-            );
-
-        } catch (error) {
-            console.error(error);
-
-            if (
-                error instanceof Error &&
-                (
-                    error.message === "SESSION_EXPIRED" ||
-                    error.message === "NO_ACCESS_TOKEN"
-                )
-            ) {
-                router.replace("/login");
-                return;
-            }
-
-            setError(
-                error instanceof Error
-                    ? error.message
-                    : "Could not process the video."
-            );
-
-        } finally {
-            setProcessingId(null);
-        }
-    }
-
-
     async function handleCreateClip(videoId: number) {
         if (creatingClip) {
             return;
@@ -389,7 +300,7 @@ export default function MyEditedVideos({
             setSelectedVideoForClip(null);
             setClipTitle("");
             setClipDescription("");
-            setClipGameCode("LEAGUE_OF_LEGENDS");
+            setClipGameCode("");
 
         } catch (error) {
             console.error(error);
@@ -413,6 +324,91 @@ export default function MyEditedVideos({
 
         } finally {
             setCreatingClip(false);
+        }
+    }
+
+
+    async function handleDeleteVideo(video: VideoAssetResponse) {
+        if (deletingVideoId !== null) {
+            return;
+        }
+
+        if (video.id === activeEditorVideoId) {
+            setVideoDeleteError(
+                "Finish the current editing session before deleting this video."
+            );
+            return;
+        }
+
+        setDeletingVideoId(video.id);
+        setVideoDeleteError("");
+        setVideoDeleteSuccess("");
+
+        try {
+            const response = await authenticatedFetch(
+                `http://localhost:8080/api/clips/videos/${video.id}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            if (response.status === 409) {
+                throw new Error(
+                    "This video is used by one or more clips. Remove those clips before deleting the video."
+                );
+            }
+
+            if (response.status === 404) {
+                throw new Error("Video not found.");
+            }
+
+            if (!response.ok) {
+                throw new Error("Could not delete the video.");
+            }
+
+            // Remover o vídeo da lista sem F5
+            setVideos((current) =>
+                current.filter((item) => item.id !== video.id)
+            );
+
+            // Fechar o Preview, caso estivesse aberto
+            if (previewVideo?.id === video.id) {
+                setPreviewVideo(null);
+            }
+
+            if (selectedVideoForClip === video.id) {
+                setSelectedVideoForClip(null);
+            }
+
+            // Fechar a confirmação
+            setVideoToDelete(null);
+
+            setVideoDeleteSuccess(
+                "Video deleted successfully."
+            );
+
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (
+                    error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN"
+                )
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setVideoDeleteError(
+                error instanceof Error
+                    ? error.message
+                    : "Could not delete the video."
+            );
+
+        } finally {
+            setDeletingVideoId(null);
         }
     }
 
@@ -531,9 +527,27 @@ export default function MyEditedVideos({
                                     >
                                         {selectedVideoForClip === video.id
                                             ? "Cancel"
-                                            : "Use in Clip"}
+                                            : "Create Feed Clip"}
                                     </button>
                                 )}
+
+
+                                <button
+                                    type="button"
+                                    className="clip-delete-button"
+                                    disabled={
+                                        deletingVideoId !== null ||
+                                        video.id === activeEditorVideoId
+                                    }
+                                    onClick={() => {
+                                        setVideoDeleteError("");
+                                        setVideoDeleteSuccess("");
+                                        setVideoToDelete(video);
+                                    }}
+                                >
+                                    Delete
+                                </button>
+
 
                             </div>
 
@@ -568,12 +582,18 @@ export default function MyEditedVideos({
 
                             {selectedVideoForClip === video.id && (
                                 <div className="my-video-create-panel">
-                                    <strong>Create Clip</strong>
+
+                                    <strong>Create Feed Clip</strong>
 
                                     <p>
-                                        Video #{video.id} selected.
-                                        Add your clip details to prepare it for publishing.
+                                        Selected video:{" "}
+                                        <strong>
+                                            {video.uploadedFileName?.trim() || "Previous upload"}
+                                        </strong>
+                                        . Create a private clip from this video.
+                                        You can publish it to the community Feed when you're ready.
                                     </p>
+
 
                                     <div
                                         className="clip-form-grid"
@@ -584,6 +604,7 @@ export default function MyEditedVideos({
                                                 Game
                                             </label>
 
+
                                             <select
                                                 id={`clip-game-${video.id}`}
                                                 value={clipGameCode}
@@ -591,13 +612,26 @@ export default function MyEditedVideos({
                                                     setClipGameCode(event.target.value)
                                                 }
                                             >
+                                                <option value="" disabled>
+                                                    Select a game
+                                                </option>
                                                 <option value="LEAGUE_OF_LEGENDS">
                                                     League of Legends
                                                 </option>
+
                                                 <option value="VALORANT">
                                                     Valorant
                                                 </option>
+
+                                                <option value="CS2">
+                                                    Counter-Strike 2
+                                                </option>
+
+                                                <option value="ROCKET_LEAGUE">
+                                                    Rocket League
+                                                </option>
                                             </select>
+
                                         </div>
 
                                         <div className="profile-field">
@@ -645,103 +679,145 @@ export default function MyEditedVideos({
                                         type="button"
                                         className="profile-save-button"
                                         style={{ marginTop: "20px" }}
-                                        disabled={creatingClip || !clipTitle.trim()}
+                                        disabled={creatingClip || !clipTitle.trim() || !clipGameCode}
                                         onClick={() => void handleCreateClip(video.id)}
                                     >
                                         {creatingClip
-                                            ? "Creating Clip..."
-                                            : "Create Clip"}
+                                            ? "Creating Feed Clip..."
+                                            : "Create Feed Clip"}
                                     </button>
 
                                 </div>
                             )}
-
 
 
                             {!video.processed &&
                                 video.id !== activeEditorVideoId && (
-                                <div
-                                    style={{
-                                        flexBasis: "100%",
-                                        width: "100%",
-                                        borderTop: "1px solid #253047",
-                                        paddingTop: "16px",
-                                    }}
-                                >
-                                    <div className="clip-form-grid">
-                                        <div className="profile-field">
-                                            <label htmlFor={`video-start-${video.id}`}>
-                                                Start (seconds)
-                                            </label>
-
-                                            <input
-                                                id={`video-start-${video.id}`}
-                                                type="number"
-                                                min="0"
-                                                step="1"
-                                                value={videoRanges[video.id]?.start ?? "0"}
-                                                disabled={processingId !== null}
-                                                onChange={(event) =>
-                                                    setVideoRanges((current) => ({
-                                                        ...current,
-                                                        [video.id]: {
-                                                            start: event.target.value,
-                                                            end: current[video.id]?.end ?? "5",
-                                                        },
-                                                    }))
-                                                }
-                                            />
-                                        </div>
-
-                                        <div className="profile-field">
-                                            <label htmlFor={`video-end-${video.id}`}>
-                                                End (seconds)
-                                            </label>
-
-                                            <input
-                                                id={`video-end-${video.id}`}
-                                                type="number"
-                                                min="1"
-                                                step="1"
-                                                value={videoRanges[video.id]?.end ?? "5"}
-                                                disabled={processingId !== null}
-                                                onChange={(event) =>
-                                                    setVideoRanges((current) => ({
-                                                        ...current,
-                                                        [video.id]: {
-                                                            start: current[video.id]?.start ?? "0",
-                                                            end: event.target.value,
-                                                        },
-                                                    }))
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        className="profile-save-button"
-                                        style={{ marginTop: "16px" }}
-                                        disabled={processingId !== null}
-                                        onClick={() => void handleProcessVideo(video.id)}
+                                    <div
+                                        style={{
+                                            flexBasis: "100%",
+                                            width: "100%",
+                                            borderTop: "1px solid #253047",
+                                            paddingTop: "16px",
+                                        }}
                                     >
-                                        {processingId === video.id
-                                            ? "Processing..."
-                                            : "Process Video"}
-                                    </button>
-                                </div>
-                            )}
+                                        <button
+                                            type="button"
+                                            className="profile-save-button my-video-preview-button"
+                                            onClick={() => {
+                                                window.dispatchEvent(
+                                                    new CustomEvent(
+                                                        "clutchmetrics:resume-editing",
+                                                        {
+                                                            detail: {
+                                                                id: video.id,
+                                                                fileName:
+                                                                    video.uploadedFileName?.trim() ||
+                                                                    "Previous upload",
+                                                            },
+                                                        }
+                                                    )
+                                                );
+                                            }}
+                                        >
+                                            Resume Editing
+                                        </button>
+                                    </div>
+                                )}
+
+
+
 
                         </div>
                     ))}
                 </div>
             )}
 
+
+            {videoToDelete && (
+                <div className="clip-delete-modal-overlay">
+                    <div
+                        className="clip-delete-modal"
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="delete-video-title"
+                        aria-describedby="delete-video-description"
+                    >
+                        <div className="clip-delete-modal-icon">
+                            !
+                        </div>
+
+                        <h2 id="delete-video-title">
+                            Delete video?
+                        </h2>
+
+                        <p id="delete-video-description">
+                            Are you sure you want to delete{" "}
+                            <strong>
+                                {videoToDelete.uploadedFileName?.trim()
+                                    || "this video"}
+                            </strong>
+                            ?
+                        </p>
+
+                        <p className="clip-delete-warning">
+                            This action cannot be undone.
+                            Videos associated with clips cannot be deleted.
+                        </p>
+
+                        {videoDeleteError && (
+                            <p
+                                className="clip-delete-error"
+                                role="alert"
+                            >
+                                {videoDeleteError}
+                            </p>
+                        )}
+
+                        <div className="clip-delete-modal-actions">
+                            <button
+                                type="button"
+                                className="clip-delete-cancel"
+                                disabled={deletingVideoId !== null}
+                                onClick={() => {
+                                    setVideoToDelete(null);
+                                    setVideoDeleteError("");
+                                }}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                className="clip-delete-confirm"
+                                disabled={deletingVideoId !== null}
+                                onClick={() =>
+                                    void handleDeleteVideo(videoToDelete)
+                                }
+                            >
+                                {deletingVideoId !== null
+                                    ? "Deleting..."
+                                    : "Delete video"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
             {clipCreateSuccess && (
                 <ClipToast
                     message={clipCreateSuccess}
                     type="success"
                     onClose={() => setClipCreateSuccess("")}
+                />
+            )}
+
+            {videoDeleteSuccess && (
+                <ClipToast
+                    message={videoDeleteSuccess}
+                    type="success"
+                    onClose={() => setVideoDeleteSuccess("")}
                 />
             )}
 

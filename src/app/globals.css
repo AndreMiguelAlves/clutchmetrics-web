@@ -8130,6 +8130,15 @@ button.clip-delete-button:disabled {
   color: #ffffff;
 }
 
+/* Dashboard - View Analytics button */
+.performance-panel .panel-heading .ghost-button {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  min-height: 42px;
+}
+
+
 
 
 

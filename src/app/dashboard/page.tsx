@@ -71,6 +71,28 @@ interface SubscriptionResponse {
     active: boolean;
 }
 
+interface ChallengeResponse {
+    id: number;
+    gameCode: string;
+    gameName: string;
+    title: string;
+    description: string;
+    sponsorName: string;
+    rewardDescription: string;
+    targetMetric: string;
+    targetValue: number;
+    status: string;
+    startsAt: string;
+    endsAt: string;
+}
+
+interface ChallengeParticipationResponse {
+    challengeId: number;
+    progress: number;
+    completed: boolean;
+}
+
+
 const matches = [
     {
         game: "League of Legends",
@@ -122,6 +144,40 @@ const games = [
     },
 ];
 
+
+function formatChallengeTimeLeft(endsAt: string): string {
+    const endDate = new Date(endsAt);
+
+    if (Number.isNaN(endDate.getTime())) {
+        return "End date unavailable";
+    }
+
+    const today = new Date();
+
+    const endDay = Date.UTC(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate()
+    );
+
+    const currentDay = Date.UTC(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+    );
+
+    const daysLeft = Math.round(
+        (endDay - currentDay) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysLeft < 0) return "Challenge ended";
+    if (daysLeft === 0) return "Ends today";
+    if (daysLeft === 1) return "1 day left";
+
+    return `${daysLeft} days left`;
+}
+
+
 export default function Home() {
     const router = useRouter();
 
@@ -140,10 +196,21 @@ export default function Home() {
         useState<GameAccountResponse[]>([]);
     const [subscription, setSubscription] =
         useState<SubscriptionResponse | null>(null);
-    const [selectedGame, setSelectedGame] = useState(
-        "LEAGUE_OF_LEGENDS"
-    );
+
+    const [challenges, setChallenges] =
+        useState<ChallengeResponse[]>([]);
+
+    const [challengeParticipations, setChallengeParticipations] =
+        useState<ChallengeParticipationResponse[]>([]);
+
+
+    const [selectedGame, setSelectedGame] = useState("");
+
     const [selectedDays, setSelectedDays] = useState("30");
+
+    const [selectedChallengeIndex, setSelectedChallengeIndex] =
+        useState(0);
+
 
     useEffect(() => {
         async function loadProfile() {
@@ -197,6 +264,12 @@ export default function Home() {
 
     useEffect(() => {
         async function loadDashboardSummary() {
+
+            if (!selectedGame) {
+                setSummary(null);
+                return;
+            }
+
             const accessToken =
                 localStorage.getItem("accessToken");
 
@@ -237,6 +310,12 @@ export default function Home() {
 
     useEffect(() => {
         async function loadEvolution() {
+
+            if (!selectedGame) {
+                setEvolution([]);
+                return;
+            }
+
             const accessToken =
                 localStorage.getItem("accessToken");
 
@@ -275,13 +354,19 @@ export default function Home() {
     }, [selectedGame, selectedDays]);
     useEffect(() => {
         async function loadLatestMatches() {
+            if (!selectedGame) {
+                setLatestMatches([]);
+                return;
+            }
             try {
+
                 const response = await authenticatedFetch(
-                    "http://localhost:8080/api/matches?gameCode=LEAGUE_OF_LEGENDS",
+                    `http://localhost:8080/api/matches?gameCode=${selectedGame}`,
                     {
                         method: "GET",
                     }
                 );
+
 
                 if (!response.ok) {
                     throw new Error(
@@ -331,12 +416,14 @@ export default function Home() {
     useEffect(() => {
         async function loadGameAccounts() {
             try {
+
                 const response = await authenticatedFetch(
-                    `http://localhost:8080/api/matches?gameCode=${selectedGame}`,
+                    "http://localhost:8080/api/game-accounts",
                     {
                         method: "GET",
                     }
                 );
+
 
                 if (!response.ok) {
                     throw new Error(
@@ -391,6 +478,148 @@ export default function Home() {
 
         loadSubscription();
     }, []);
+
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadChallenges() {
+            try {
+                const [challengesResponse, participationsResponse] =
+                    await Promise.all([
+                        authenticatedFetch(
+                            "http://localhost:8080/api/challenges"
+                        ),
+                        authenticatedFetch(
+                            "http://localhost:8080/api/challenges/me"
+                        ),
+                    ]);
+
+                if (
+                    !challengesResponse.ok ||
+                    !participationsResponse.ok
+                ) {
+                    throw new Error(
+                        "Could not load challenge data."
+                    );
+                }
+
+                const challengesData: ChallengeResponse[] =
+                    await challengesResponse.json();
+
+                const now = Date.now();
+
+                const availableChallenges = challengesData.filter((challenge) => {
+                    const startsAt = new Date(challenge.startsAt).getTime();
+                    const endsAt = new Date(challenge.endsAt).getTime();
+
+                    return (
+                        challenge.status === "ACTIVE" &&
+                        startsAt <= now &&
+                        endsAt > now
+                    );
+                });
+
+
+                const participationsData: ChallengeParticipationResponse[] =
+                    await participationsResponse.json();
+
+                if (!cancelled) {
+                    setChallenges(availableChallenges);
+                    setChallengeParticipations(participationsData);
+                }
+
+            } catch (error) {
+                console.error(
+                    "Could not load dashboard challenges:",
+                    error
+                );
+
+                if (
+                    error instanceof Error &&
+                    (
+                        error.message === "SESSION_EXPIRED" ||
+                        error.message === "NO_ACCESS_TOKEN"
+                    )
+                ) {
+                    router.replace("/login");
+                }
+            }
+        }
+
+        void loadChallenges();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [router]);
+
+
+
+    const visibleChallenges = challenges
+        .filter(
+            (challenge) =>
+                selectedGame === "" ||
+                challenge.gameCode === selectedGame
+        )
+        .sort((a, b) => {
+            const aJoined = challengeParticipations.some(
+                (participation) =>
+                    participation.challengeId === a.id
+            );
+
+            const bJoined = challengeParticipations.some(
+                (participation) =>
+                    participation.challengeId === b.id
+            );
+
+            return Number(bJoined) - Number(aJoined);
+        });
+
+    const featuredChallenge =
+        visibleChallenges[selectedChallengeIndex] ??
+        visibleChallenges[0] ??
+        null;
+
+
+
+    const featuredParticipation =
+        challengeParticipations.find(
+            (participation) =>
+                participation.challengeId === featuredChallenge?.id
+        ) ?? null;
+
+
+    const featuredProgressText = !featuredChallenge
+        ? "—"
+        : !featuredParticipation
+            ? "Not joined"
+            : `${featuredParticipation.progress} / ${featuredChallenge.targetValue} ${
+                featuredChallenge.targetMetric === "WINS"
+                    ? "wins"
+                    : featuredChallenge.targetMetric === "KILLS"
+                        ? "kills"
+                        : featuredChallenge.targetMetric === "MATCHES_PLAYED"
+                            ? "matches"
+                            : ""
+            }`;
+
+
+    const featuredProgressPercent =
+        featuredChallenge &&
+        featuredParticipation &&
+        featuredChallenge.targetValue > 0
+            ? Math.min(
+                100,
+                Math.max(
+                    0,
+                    (featuredParticipation.progress /
+                        featuredChallenge.targetValue) * 100
+                )
+            )
+            : 0;
+
+
 
     function formatMatchTime(playedAt: string) {
         const matchDate = new Date(playedAt);
@@ -478,10 +707,18 @@ export default function Home() {
                         <div className="filters"><select
                             className="filter-button"
                             value={selectedGame}
-                            onChange={(event) =>
-                                setSelectedGame(event.target.value)
-                            }
+
+                            onChange={(event) => {
+                                setSelectedGame(event.target.value);
+                                setSelectedChallengeIndex(0);
+                            }}
+
                         >
+
+                            <option value="" disabled>
+                                Select a game
+                            </option>
+
                             <option value="LEAGUE_OF_LEGENDS">
                                 League of Legends
                             </option>
@@ -525,13 +762,20 @@ export default function Home() {
                         <article className="metric-card">
                             <div className="metric-top">
                                 <span>KDA RATIO</span>
-                                <span className="trend positive">+8.2%</span>
                             </div>
 
                             <strong className="metric-number">
                                 {summary?.averageKda ?? "—"}
                             </strong>
-                            <p>Across all matches</p>
+
+                            <p>
+                                {!selectedGame
+                                    ? "Select a game to view your KDA"
+                                    : selectedDays === "ALL"
+                                        ? "Across all recorded matches"
+                                        : `Last ${selectedDays} days`}
+                            </p>
+
                         </article>
 
                         <article className="metric-card">
@@ -610,7 +854,15 @@ export default function Home() {
                                     <h3>KDA evolution</h3>
                                 </div>
 
-                                <button className="ghost-button">View analytics</button>
+
+                                <button
+                                    type="button"
+                                    className="ghost-button"
+                                    onClick={() => router.push("/analytics")}
+                                >
+                                    View analytics
+                                </button>
+
                             </div>
 
                             <div className="chart-summary">
@@ -761,35 +1013,143 @@ export default function Home() {
 
                             <div className="challenge-brand">
                                 <span>SPONSORED CHALLENGE</span>
-                                <strong>LOGITECH G</strong>
+                                <strong>
+                                    {featuredChallenge?.sponsorName ?? "—"}
+                                </strong>
                             </div>
 
                             <div>
-                                <span className="game-tag">LEAGUE OF LEGENDS</span>
-                                <h3>Victory Protocol</h3>
-                                <p>Win 5 ranked matches before the challenge expires.</p>
+
+
+<span className="game-tag">
+    {featuredChallenge?.gameName?.toUpperCase() ??
+        "NO ACTIVE CHALLENGE"}
+</span>
+
+                                <h3>
+                                    {featuredChallenge?.title ?? "No active challenges"}
+                                </h3>
+
+                                <p>
+                                    {featuredChallenge?.description ??
+                                        "There are no active sponsored challenges for this game."}
+                                </p>
                             </div>
 
-                            <div className="challenge-progress">
-                                <div className="progress-label">
+
+                            <div
+                                className="challenge-progress"
+                                style={{ display: featuredChallenge ? undefined : "none" }}
+                            >
+
+                            <div className="progress-label">
                                     <span>Progress</span>
-                                    <strong>4 / 5 wins</strong>
+
+                                    <strong>{featuredProgressText}</strong>
+
                                 </div>
 
-                                <div className="progress-track">
-                                    <div className="progress-value" />
+
+                                <div
+                                    className="progress-track"
+                                    role="progressbar"
+                                    aria-label="Challenge progress"
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-valuenow={featuredProgressPercent}
+                                >
+                                    <div
+                                        className="progress-value"
+                                        style={{
+                                            width: `${featuredProgressPercent}%`,
+                                        }}
+                                    />
                                 </div>
+
                             </div>
 
-                            <div className="reward-box">
-                                <span>REWARD</span>
-                                <strong>Logitech G Pro X Headset</strong>
+
+                            <div
+                                className="reward-box"
+                                style={{ display: featuredChallenge ? undefined : "none" }}
+                            >
+
+                            <span>REWARD</span>
+                                <strong>
+                                    {featuredChallenge?.rewardDescription ?? "—"}
+                                </strong>
                             </div>
 
-                            <div className="challenge-footer">
-                                <span>2 days left</span>
-                                <button>View challenge</button>
+
+                            <div
+                                className="challenge-footer"
+                                style={{ display: featuredChallenge ? undefined : "none" }}
+                            >
+
+
+<span>
+    {featuredChallenge
+        ? formatChallengeTimeLeft(featuredChallenge.endsAt)
+        : "No active challenge"}
+</span>
+
+
+                                <button
+                                    type="button"
+                                    onClick={() => router.push("/challenges")}
+                                >
+                                    View challenge
+                                </button>
+
                             </div>
+
+
+                            {visibleChallenges.length > 1 && (
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        gap: "12px",
+                                        marginTop: "20px",
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        className="ghost-button"
+                                        onClick={() =>
+                                            setSelectedChallengeIndex((current) =>
+                                                (current - 1 + visibleChallenges.length) %
+                                                visibleChallenges.length
+                                            )
+                                        }
+                                    >
+                                        ← Previous
+                                    </button>
+
+                                    <span style={{ fontSize: "13px", color: "#a5b4cf" }}>
+            {Math.min(
+                selectedChallengeIndex + 1,
+                visibleChallenges.length
+            )}{" "}
+                                        of {visibleChallenges.length}
+        </span>
+
+                                    <button
+                                        type="button"
+                                        className="ghost-button"
+                                        onClick={() =>
+                                            setSelectedChallengeIndex((current) =>
+                                                (current + 1) % visibleChallenges.length
+                                            )
+                                        }
+                                    >
+                                        Next →
+                                    </button>
+                                </div>
+                            )}
+
+
                         </article>
                     </section>
 

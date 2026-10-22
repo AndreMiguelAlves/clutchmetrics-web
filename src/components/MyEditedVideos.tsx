@@ -626,10 +626,6 @@ export default function MyEditedVideos({
                                                 <option value="CS2">
                                                     Counter-Strike 2
                                                 </option>
-
-                                                <option value="ROCKET_LEAGUE">
-                                                    Rocket League
-                                                </option>
                                             </select>
 
                                         </div>

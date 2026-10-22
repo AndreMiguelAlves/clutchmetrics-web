@@ -136,12 +136,6 @@ const games = [
         username: "Not connected",
         region: "—",
     },
-    {
-        code: "RL",
-        name: "Rocket League",
-        username: "Not connected",
-        region: "—",
-    },
 ];
 
 
@@ -731,9 +725,6 @@ export default function Home() {
                                 Counter-Strike 2
                             </option>
 
-                            <option value="ROCKET_LEAGUE">
-                                Rocket League
-                            </option>
                         </select>
 
                             <select
@@ -1181,19 +1172,23 @@ export default function Home() {
                                     >
                                         <div className="match-game">
                                             <div className="game-icon game-badge-image">
-                                                <img
-                                                    src={
-                                                        match.gameCode === "LEAGUE_OF_LEGENDS"
-                                                            ? "/games/lol.png"
-                                                            : match.gameCode === "VALORANT"
-                                                                ? "/games/valorant.png"
-                                                                : match.gameCode === "CS2"
-                                                                    ? "/games/cs2.png"
-                                                                    : "/games/rocket-league.png"
-                                                    }
-                                                    alt={`${match.gameName} logo`}
-                                                    className="game-logo-image"
-                                                />
+                                                {(
+                                                    match.gameCode === "LEAGUE_OF_LEGENDS" ||
+                                                    match.gameCode === "VALORANT" ||
+                                                    match.gameCode === "CS2"
+                                                ) && (
+                                                    <img
+                                                        src={
+                                                            match.gameCode === "LEAGUE_OF_LEGENDS"
+                                                                ? "/games/lol.png"
+                                                                : match.gameCode === "VALORANT"
+                                                                    ? "/games/valorant.png"
+                                                                    : "/games/cs2.png"
+                                                        }
+                                                        alt={`${match.gameName} logo`}
+                                                        className="game-logo-image"
+                                                    />
+                                                )}
                                             </div>
 
                                             <div>
@@ -1253,9 +1248,7 @@ export default function Home() {
                                             ? "LEAGUE_OF_LEGENDS"
                                             : game.code === "VAL"
                                                 ? "VALORANT"
-                                                : game.code === "CS2"
-                                                    ? "CS2"
-                                                    : "ROCKET_LEAGUE";
+                                                : "CS2";
 
                                     const account = gameAccounts.find(
                                         (item) => item.gameCode === apiGameCode
@@ -1266,9 +1259,7 @@ export default function Home() {
                                             ? "/games/lol.png"
                                             : game.code === "VAL"
                                                 ? "/games/valorant.png"
-                                                : game.code === "CS2"
-                                                    ? "/games/cs2.png"
-                                                    : "/games/rocket-league.png";
+                                                : "/games/cs2.png";
 
                                     return (
                                         <div

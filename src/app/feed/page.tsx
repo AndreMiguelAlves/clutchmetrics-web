@@ -12,7 +12,6 @@ const feedGameImages: Record<string, string> = {
     "League of Legends": "/games/lol.png",
     Valorant: "/games/valorant.png",
     "Counter-Strike 2": "/games/cs2.png",
-    "Rocket League": "/games/rocket-league.png",
 };
 
 interface ClipResponse {
@@ -90,7 +89,6 @@ export default function FeedPage() {
         { label: "League of Legends", value: "League of Legends" },
         { label: "Valorant", value: "Valorant" },
         { label: "CS2", value: "Counter-Strike 2" },
-        { label: "Rocket League", value: "Rocket League" },
     ];
 
     const filteredClips = clips.filter((clip) => {

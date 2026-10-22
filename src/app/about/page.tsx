@@ -36,10 +36,6 @@ const games = [
         name: "Counter-Strike 2",
         image: "/games/cs2.png",
     },
-    {
-        name: "Rocket League",
-        image: "/games/rocket-league.png",
-    },
 ];
 
 export default function AboutPage() {

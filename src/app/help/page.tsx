@@ -14,7 +14,7 @@ const faqs = [
     {
         question: "Which games does ClutchMetrics support?",
         answer:
-            "ClutchMetrics currently supports League of Legends, Valorant, Counter-Strike 2 and Rocket League.",
+            "ClutchMetrics currently supports League of Legends, Valorant and Counter-Strike 2."
     },
     {
         question: "How can I track my performance?",

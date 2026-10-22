@@ -146,10 +146,6 @@ export default function MatchesPage() {
                             <option value="CS2">
                                 Counter-Strike 2
                             </option>
-
-                            <option value="ROCKET_LEAGUE">
-                                Rocket League
-                            </option>
                         </select>
                     </div>
 
@@ -198,19 +194,23 @@ export default function MatchesPage() {
                             >
                                 <div className="matches-history-game">
                                     <div className="game-icon game-badge-image">
-                                        <img
-                                            src={
-                                                match.gameCode === "LEAGUE_OF_LEGENDS"
-                                                    ? "/games/lol.png"
-                                                    : match.gameCode === "VALORANT"
-                                                        ? "/games/valorant.png"
-                                                        : match.gameCode === "CS2"
-                                                            ? "/games/cs2.png"
-                                                            : "/games/rocket-league.png"
-                                            }
-                                            alt={`${match.gameName} logo`}
-                                            className="game-logo-image"
-                                        />
+                                        {(
+                                            match.gameCode === "LEAGUE_OF_LEGENDS" ||
+                                            match.gameCode === "VALORANT" ||
+                                            match.gameCode === "CS2"
+                                        ) && (
+                                            <img
+                                                src={
+                                                    match.gameCode === "LEAGUE_OF_LEGENDS"
+                                                        ? "/games/lol.png"
+                                                        : match.gameCode === "VALORANT"
+                                                            ? "/games/valorant.png"
+                                                            : "/games/cs2.png"
+                                                }
+                                                alt={`${match.gameName} logo`}
+                                                className="game-logo-image"
+                                            />
+                                        )}
                                     </div>
 
                                     <div>

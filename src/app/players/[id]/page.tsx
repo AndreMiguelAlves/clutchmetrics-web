@@ -30,7 +30,6 @@ const publicGameImages: Record<string, string> = {
     LEAGUE_OF_LEGENDS: "/games/lol.png",
     VALORANT: "/games/valorant.png",
     CS2: "/games/cs2.png",
-    ROCKET_LEAGUE: "/games/rocket-league.png",
 };
 
 export default function PublicPlayerPage() {

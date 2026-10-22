@@ -11,9 +11,8 @@ import MyEditedVideos from "@/components/MyEditedVideos";
 
 const clipGameImages: Record<string, string> = {
     "League of Legends": "/games/lol.png",
-    Valorant: "/games/valorant.png",
+    "Valorant": "/games/valorant.png",
     "Counter-Strike 2": "/games/cs2.png",
-    "Rocket League": "/games/rocket-league.png",
 };
 
 interface ClipResponse {
@@ -756,10 +755,6 @@ export default function ClipsPage() {
 
                                     <option value="CS2">
                                         Counter-Strike 2
-                                    </option>
-
-                                    <option value="ROCKET_LEAGUE">
-                                        Rocket League
                                     </option>
                                 </select>
                             </div>

@@ -31,11 +31,6 @@ const supportedGames = [
         shortCode: "CS2",
         name: "Counter-Strike 2",
     },
-    {
-        code: "ROCKET_LEAGUE",
-        shortCode: "RL",
-        name: "Rocket League",
-    },
 ];
 
 export default function GameAccountsPage() {
@@ -215,9 +210,7 @@ export default function GameAccountsPage() {
                                     ? "/games/lol.png"
                                     : game.code === "VALORANT"
                                         ? "/games/valorant.png"
-                                        : game.code === "CS2"
-                                            ? "/games/cs2.png"
-                                            : "/games/rocket-league.png";
+                                        : "/games/cs2.png";
 
                             return (
                                 <article

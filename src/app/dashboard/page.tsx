@@ -190,6 +190,8 @@ export default function Home() {
         useState<GameAccountResponse[]>([]);
     const [subscription, setSubscription] =
         useState<SubscriptionResponse | null>(null);
+    const [currentTime, setCurrentTime] =
+        useState<number | null>(null);
 
     const [challenges, setChallenges] =
         useState<ChallengeResponse[]>([]);
@@ -201,6 +203,7 @@ export default function Home() {
     const [selectedGame, setSelectedGame] = useState("");
 
     const [selectedDays, setSelectedDays] = useState("30");
+    const [showPremiumNotice, setShowPremiumNotice] = useState(false);
 
     const [selectedChallengeIndex, setSelectedChallengeIndex] =
         useState(0);
@@ -475,6 +478,26 @@ export default function Home() {
 
 
     useEffect(() => {
+        const updateTime = () => {
+            setCurrentTime(Date.now());
+        };
+
+        const initialTimer = window.setTimeout(updateTime, 0);
+
+        const interval = window.setInterval(
+            updateTime,
+            60 * 1000
+        );
+
+        return () => {
+            window.clearTimeout(initialTimer);
+            window.clearInterval(interval);
+        };
+    }, []);
+
+
+
+    useEffect(() => {
         let cancelled = false;
 
         async function loadChallenges() {
@@ -679,6 +702,47 @@ export default function Home() {
         );
     }
 
+
+    const premiumEndsAt =
+        subscription?.planCode === "PREMIUM" &&
+        subscription.active &&
+        subscription.endsAt
+            ? new Date(subscription.endsAt)
+            : null;
+
+    const today =
+        currentTime !== null
+            ? new Date(currentTime)
+            : null;
+
+    const premiumDaysRemaining =
+        premiumEndsAt &&
+        today &&
+        !Number.isNaN(premiumEndsAt.getTime())
+            ? Math.max(
+                0,
+                Math.round(
+                    (
+                        Date.UTC(
+                            premiumEndsAt.getFullYear(),
+                            premiumEndsAt.getMonth(),
+                            premiumEndsAt.getDate()
+                        ) -
+                        Date.UTC(
+                            today.getFullYear(),
+                            today.getMonth(),
+                            today.getDate()
+                        )
+                    ) / (1000 * 60 * 60 * 24)
+                )
+            )
+            : null;
+
+    const isPremium =
+        subscription?.planCode === "PREMIUM" &&
+        subscription.active &&
+        subscription.unlimitedAnalytics;
+
     return (
         <AppShell title="Performance Dashboard">
 
@@ -730,9 +794,19 @@ export default function Home() {
                             <select
                                 className="filter-button"
                                 value={selectedDays}
-                                onChange={(event) =>
-                                    setSelectedDays(event.target.value)
-                                }
+
+                                onChange={(event) => {
+                                    const nextPeriod = event.target.value;
+
+                                    if (nextPeriod === "ALL" && !isPremium) {
+                                        setShowPremiumNotice(true);
+                                        return;
+                                    }
+
+                                    setShowPremiumNotice(false);
+                                    setSelectedDays(nextPeriod);
+                                }}
+
                             >
                                 <option value="7">
                                     Last 7 days
@@ -743,11 +817,65 @@ export default function Home() {
                                 </option>
 
                                 <option value="ALL">
-                                    All time
+                                    {isPremium ? "All time" : "All time (Premium)"}
                                 </option>
                             </select>
                         </div>
                     </section>
+
+
+                    {showPremiumNotice && (
+                        <div
+                            role="alert"
+                            style={{
+                                background: "linear-gradient(135deg, #19152e, #111722)",
+                                border: "1px solid #6455b8",
+                                borderRadius: "14px",
+                                padding: "22px",
+                                marginBottom: "24px",
+                            }}
+                        >
+                            <h3
+                                style={{
+                                    color: "#ffffff",
+                                    fontSize: "18px",
+                                    marginBottom: "8px",
+                                }}
+                            >
+                                Unlock unlimited analytics
+                            </h3>
+
+                            <p
+                                style={{
+                                    color: "#94a3b8",
+                                    fontSize: "14px",
+                                    marginBottom: "16px",
+                                }}
+                            >
+                                {subscription
+                                    ? "Upgrade to Premium to access your complete performance history."
+                                    : "Your subscription could not be verified. Please check your plan."}
+                            </p>
+
+                            <button
+                                type="button"
+                                onClick={() => router.push("/subscription")}
+                                style={{
+                                    background: "#7955ff",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    borderRadius: "9px",
+                                    padding: "11px 20px",
+                                    fontSize: "14px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                {subscription ? "Upgrade to Premium" : "View subscription"}
+                            </button>
+                        </div>
+                    )}
+
 
                     <section className="metrics-grid">
                         <article className="metric-card">
@@ -809,33 +937,84 @@ export default function Home() {
                         </article>
                     </section>
 
-                    {subscription?.planCode === "FREE" && (
-                        <section className="dashboard-premium-banner">
-                            <div className="dashboard-premium-content">
-                                <div className="dashboard-premium-badge">
-                                    PREMIUM
+
+                    {subscription && (isPremium || !showPremiumNotice) && (
+                        subscription.planCode === "PREMIUM" &&
+                        subscription.active ? (
+                            <section className="dashboard-premium-banner">
+                                <div className="dashboard-premium-content">
+                                    <div className="dashboard-premium-badge">
+                                        PREMIUM
+                                    </div>
+
+                                    <div>
+                                        <h2>Premium membership active</h2>
+
+                                        <p>
+                                            Unlimited analytics unlocked.
+                                            Enjoy all your Premium benefits.
+                                        </p>
+
+                                        {premiumDaysRemaining !== null &&
+                                            premiumEndsAt && (
+                                                <p
+                                                    style={{
+                                                        color: "#c4b5fd",
+                                                        fontSize: "13px",
+                                                        marginTop: "10px",
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    {premiumDaysRemaining > 0
+                                                        ? `${premiumDaysRemaining} days remaining`
+                                                        : "Current period has ended"}
+                                                    {" · "}
+                                                    {premiumEndsAt.toLocaleDateString(
+                                                        "en-GB",
+                                                        {
+                                                            day: "2-digit",
+                                                            month: "short",
+                                                            year: "numeric",
+                                                        }
+                                                    )}
+                                                </p>
+                                            )}
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <h2>
-                                        Unlock advanced ClutchMetrics analytics
-                                    </h2>
+                                <a
+                                    href="/subscription"
+                                    className="dashboard-premium-button"
+                                >
+                                    Manage plan
+                                </a>
+                            </section>
+                        ) : (
+                            <section className="dashboard-premium-banner">
+                                <div className="dashboard-premium-content">
+                                    <div className="dashboard-premium-badge">
+                                        PREMIUM
+                                    </div>
 
-                                    <p>
-                                        Get unlimited analytics, 4K exports
-                                        and remove watermarks from your clips.
-                                    </p>
+                                    <div>
+                                        <h2>
+                                            Unlock advanced ClutchMetrics analytics
+                                        </h2>
+
+                                        Unlock unlimited analytics, advanced performance insights and Full HD 1080p video exports.
+                                    </div>
                                 </div>
-                            </div>
 
-                            <a
-                                href="/subscription"
-                                className="dashboard-premium-button"
-                            >
-                                Upgrade to Premium
-                            </a>
-                        </section>
+                                <a
+                                    href="/subscription"
+                                    className="dashboard-premium-button"
+                                >
+                                    Upgrade to Premium
+                                </a>
+                            </section>
+                        )
                     )}
+
 
                     <section className="dashboard-grid">
                         <article className="panel performance-panel">

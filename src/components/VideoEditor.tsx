@@ -11,6 +11,10 @@ interface VideoUploadResponse {
     id: number;
     fileName: string;
 }
+interface VideoEditorSubscription {
+    planCode: "FREE" | "PREMIUM";
+    active: boolean;
+}
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
@@ -22,6 +26,8 @@ export default function VideoEditor({
                                         onActiveVideoChange,
                                     }: VideoEditorProps) {
     const router = useRouter();
+    const [videoSubscription, setVideoSubscription] =
+        useState<VideoEditorSubscription | null>(null);
 
     const [selectedFile, setSelectedFile] =
         useState<File | null>(null);
@@ -46,6 +52,50 @@ export default function VideoEditor({
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const sourceVideoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadVideoSubscription() {
+            try {
+                const response = await authenticatedFetch(
+                    "http://localhost:8080/api/subscription/me"
+                );
+
+                if (!response.ok) {
+                    throw new Error("Could not load subscription.");
+                }
+
+                const data: VideoEditorSubscription =
+                    await response.json();
+
+                if (!cancelled) {
+                    setVideoSubscription(data);
+                }
+
+            } catch (error) {
+                if (cancelled) return;
+
+                console.error(error);
+
+                if (
+                    error instanceof Error &&
+                    (
+                        error.message === "SESSION_EXPIRED" ||
+                        error.message === "NO_ACCESS_TOKEN"
+                    )
+                ) {
+                    router.replace("/login");
+                }
+            }
+        }
+
+        void loadVideoSubscription();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [router]);
 
     useEffect(() => {
         return () => {
@@ -445,6 +495,9 @@ export default function VideoEditor({
         }
     }
 
+    const isPremiumVideoExport =
+        videoSubscription?.planCode === "PREMIUM" &&
+        videoSubscription.active;
 
     return (
 
@@ -464,14 +517,53 @@ export default function VideoEditor({
                 </div>
 
                 <div className="video-editor-format">
-            <span className="video-editor-format-icon">
-                ▯
-            </span>
+
+<span className="video-editor-format-icon">
+    <svg
+        width="26"
+        height="26"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+    >
+        <rect
+            x="6"
+            y="2"
+            width="12"
+            height="20"
+            rx="2"
+        />
+        <line
+            x1="10"
+            y1="18"
+            x2="14"
+            y2="18"
+        />
+    </svg>
+</span>
+
+
 
                     <div>
                         <strong>Vertical 9:16</strong>
-                        <small>720 × 1280 · MP4</small>
+
+                        <small>
+                            {!videoSubscription
+                                ? "Checking export quality..."
+                                : isPremiumVideoExport
+                                    ? "Full HD 1080p · 1080 × 1920 · MP4"
+                                    : "HD 720p · 720 × 1280 · MP4"}
+                        </small>
+
+                        <small style={{ display: "block", marginTop: "4px" }}>
+                            Applies to newly processed videos
+                        </small>
                     </div>
+
                 </div>
             </div>
 

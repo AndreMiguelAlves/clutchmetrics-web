@@ -3127,7 +3127,7 @@ a {
     min-height: 68px;
 
     display: grid;
-    grid-template-columns: 150px 90px 100px 1fr;
+    grid-template-columns: 150px 90px 100px minmax(120px, 1fr) 120px;
     gap: 24px;
     align-items: center;
 
@@ -3152,6 +3152,11 @@ a {
 
     .analytics-details-grid {
       grid-template-columns: 1fr;
+    }
+    .analytics-evolution-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      padding: 12px 0;
     }
   }
 
@@ -8136,6 +8141,13 @@ button.clip-delete-button:disabled {
   font-weight: 600;
   padding: 10px 16px;
   min-height: 42px;
+}
+
+/*status COMPLETED green */
+.challenge-status-completed {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 

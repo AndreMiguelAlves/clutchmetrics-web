@@ -200,6 +200,58 @@ export default function ChallengesPage() {
         );
     }
 
+
+    const completedChallenges = challenges.filter((challenge) => {
+        const participation = getParticipation(challenge.id);
+
+        return participation?.completed === true;
+    });
+
+    const activeChallenges = challenges.filter((challenge) => {
+        const participation = getParticipation(challenge.id);
+
+        if (participation?.completed) {
+            return false;
+        }
+
+        const endTime = new Date(challenge.endsAt).getTime();
+
+        return (
+            challenge.status === "ACTIVE" &&
+            statusCheckTime <= endTime
+        );
+    });
+
+    const endedChallenges = challenges.filter((challenge) => {
+        const participation = getParticipation(challenge.id);
+
+        if (participation?.completed) {
+            return false;
+        }
+
+        const endTime = new Date(challenge.endsAt).getTime();
+
+        return (
+            challenge.status !== "ACTIVE" ||
+            statusCheckTime > endTime
+        );
+    });
+
+    const challengeSections = [
+        {
+            title: "Active Challenges",
+            challenges: activeChallenges,
+        },
+        {
+            title: "Completed Challenges",
+            challenges: completedChallenges,
+        },
+        {
+            title: "Ended Challenges",
+            challenges: endedChallenges,
+        },
+    ].filter((section) => section.challenges.length > 0);
+
     return (
         <AppShell title="Challenges">
             <div className="challenges-page">
@@ -238,9 +290,28 @@ export default function ChallengesPage() {
                         </p>
                     </div>
                 ) : (
-                    <div className="challenges-grid">
-                        {challenges.map((challenge) => {
-                            const joined = isJoined(
+
+                    <div className="challenges-sections">
+                        {challengeSections.map((section) => (
+                            <section
+                                key={section.title}
+                                style={{ marginBottom: "36px" }}
+                            >
+                                <h2
+                                    style={{
+                                        fontSize: "22px",
+                                        fontWeight: 700,
+                                        color: "#f8fafc",
+                                        marginBottom: "20px",
+                                    }}
+                                >
+                                    {section.title}
+                                </h2>
+
+                                <div className="challenges-grid">
+                                    {section.challenges.map((challenge) => {
+
+                                        const joined = isJoined(
                                 challenge.id
                             );
 
@@ -264,16 +335,21 @@ export default function ChallengesPage() {
                             const isEnded =
                                 challenge.status === "ACTIVE" && now > endTime;
 
+                            const hasEnded =
+                                isEnded || challenge.status === "ENDED";
+
                             const isJoinable =
                                 challenge.status === "ACTIVE" &&
                                 !isUpcoming &&
                                 !isEnded;
 
-                            const displayStatus = isEnded
-                                ? "ENDED"
-                                : isUpcoming
-                                    ? "UPCOMING"
-                                    : challenge.status;
+                                        const displayStatus = participation?.completed
+                                            ? "COMPLETED"
+                                            : isEnded
+                                                ? "ENDED"
+                                                : isUpcoming
+                                                    ? "UPCOMING"
+                                                    : challenge.status;
 
 
                             return (
@@ -295,7 +371,11 @@ export default function ChallengesPage() {
 
                                         <span
                                             className={`challenge-status ${
-                                                isEnded ? "challenge-status-ended" : ""
+                                                participation?.completed
+                                                    ? "challenge-status-completed"
+                                                    : isEnded
+                                                        ? "challenge-status-ended"
+                                                        : ""
                                             }`}
                                         >
     {displayStatus}
@@ -401,10 +481,12 @@ export default function ChallengesPage() {
                                         {joined
                                             ? participation?.completed
                                                 ? "Completed"
-                                                : "Joined"
+                                                : hasEnded
+                                                    ? "Challenge Ended"
+                                                    : "Joined"
                                             : joiningChallengeId === challenge.id
                                                 ? "Joining..."
-                                                : isEnded
+                                                : hasEnded
                                                     ? "Challenge Ended"
                                                     : isUpcoming
                                                         ? "Coming Soon"
@@ -414,10 +496,14 @@ export default function ChallengesPage() {
 
                                     </button>
                                 </article>
-                            );
-                        })}
+                                    );
+                                    })}
+                                </div>
+                            </section>
+                        ))}
                     </div>
                 )}
+
             </div>
         </AppShell>
     );

@@ -30,6 +30,7 @@ export default function SubscriptionPage() {
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [currentTime, setCurrentTime] = useState<number | null>(null);
 
     useEffect(() => {
         async function loadSubscription() {
@@ -70,6 +71,40 @@ export default function SubscriptionPage() {
 
         loadSubscription();
     }, [router]);
+
+
+    useEffect(() => {
+        if (!subscription || (!success && !error)) {
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setSuccess("");
+            setError("");
+        }, 4500);
+
+        return () => clearTimeout(timer);
+    }, [success, error, subscription]);
+
+
+    useEffect(() => {
+        const updateTime = () => {
+            setCurrentTime(Date.now());
+        };
+
+        const initialTimer = window.setTimeout(updateTime, 0);
+
+        const interval = window.setInterval(
+            updateTime,
+            60 * 1000
+        );
+
+        return () => {
+            window.clearTimeout(initialTimer);
+            window.clearInterval(interval);
+        };
+    }, []);
+
 
     async function changePlan(
         planCode: "FREE" | "PREMIUM"
@@ -139,6 +174,47 @@ export default function SubscriptionPage() {
         }
     }
 
+
+    const premiumEndsAt =
+        subscription?.planCode === "PREMIUM" &&
+        subscription.active &&
+        subscription.endsAt
+            ? new Date(subscription.endsAt)
+            : null;
+
+
+
+    const today =
+        currentTime !== null
+            ? new Date(currentTime)
+            : null;
+
+    const premiumDaysRemaining =
+        premiumEndsAt &&
+        today &&
+        !Number.isNaN(premiumEndsAt.getTime())
+            ? Math.max(
+                0,
+                Math.round(
+                    (
+                        Date.UTC(
+                            premiumEndsAt.getFullYear(),
+                            premiumEndsAt.getMonth(),
+                            premiumEndsAt.getDate()
+                        ) -
+                        Date.UTC(
+                            today.getFullYear(),
+                            today.getMonth(),
+                            today.getDate()
+                        )
+                    ) / (1000 * 60 * 60 * 24)
+                )
+            )
+            : null;
+
+    ;
+
+
     return (
         <AppShell title="Subscription">
             <div className="subscription-page">
@@ -173,6 +249,28 @@ export default function SubscriptionPage() {
                                     {subscription?.planName ??
                                         subscription?.planCode}
                                 </strong>
+
+                                {premiumDaysRemaining !== null && premiumEndsAt && (
+                                    <p
+                                        style={{
+                                            marginTop: "10px",
+                                            color: "#c4b5fd",
+                                            fontSize: "13px",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {premiumDaysRemaining > 0
+                                            ? `${premiumDaysRemaining} days remaining in current period`
+                                            : "Current period has ended"}
+                                        {" · "}
+                                        {premiumEndsAt.toLocaleDateString("en-GB", {
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                        })}
+                                    </p>
+                                )}
+
                             </div>
 
                             <span
@@ -217,8 +315,7 @@ export default function SubscriptionPage() {
                                     <li>Core match analytics</li>
                                     <li>Game account tracking</li>
                                     <li>Match history</li>
-                                    <li>Standard clip exports</li>
-                                    <li>Watermarked exports</li>
+                                    <li>HD video exports (720p)</li>
                                 </ul>
 
                                 <button
@@ -267,9 +364,7 @@ export default function SubscriptionPage() {
                                 <ul>
                                     <li>Unlimited analytics</li>
                                     <li>Advanced performance insights</li>
-                                    <li>4K clip exports</li>
-                                    <li>No watermark</li>
-                                    <li>Premium competitive tools</li>
+                                    <li>Full HD video exports (1080p)</li>
                                 </ul>
 
                                 <button
@@ -298,6 +393,7 @@ export default function SubscriptionPage() {
                             <section className="subscription-details">
                                 <h2>Plan details</h2>
 
+
                                 <div className="subscription-details-grid">
                                     <div>
                                         <span>Unlimited analytics</span>
@@ -309,46 +405,122 @@ export default function SubscriptionPage() {
                                     </div>
 
                                     <div>
-                                        <span>4K export</span>
+                                        <span>Video export quality</span>
                                         <strong>
-                                            {subscription.export4k
-                                                ? "Yes"
-                                                : "No"}
+                                            {subscription.planCode === "PREMIUM" &&
+                                            subscription.active
+                                                ? "Full HD (1080p)"
+                                                : "HD (720p)"}
                                         </strong>
                                     </div>
 
                                     <div>
-                                        <span>Watermark</span>
+                                        <span>Performance Insights</span>
                                         <strong>
-                                            {subscription.watermarkEnabled
-                                                ? "Enabled"
-                                                : "Disabled"}
-                                        </strong>
-                                    </div>
-
-                                    <div>
-                                        <span>Auto renew</span>
-                                        <strong>
-                                            {subscription.autoRenew
-                                                ? "Enabled"
-                                                : "Disabled"}
+                                            {subscription.planCode === "PREMIUM" &&
+                                            subscription.active
+                                                ? "Unlocked"
+                                                : "Locked"}
                                         </strong>
                                     </div>
                                 </div>
+
                             </section>
                         )}
 
-                        {error && (
-                            <p className="profile-error">
-                                {error}
-                            </p>
+
+                        {(success || error) && (
+                            <div
+                                role={error ? "alert" : "status"}
+                                style={{
+                                    position: "fixed",
+                                    top: "90px",
+                                    right: "20px",
+                                    zIndex: 1000,
+                                    width: "min(380px, calc(100vw - 40px))",
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                    gap: "14px",
+                                    padding: "18px",
+                                    background: "#161d30",
+                                    border: `1px solid ${
+                                        error ? "#fb7185" : "#6455b8"
+                                    }`,
+                                    borderRadius: "14px",
+                                    boxShadow: "0 12px 35px rgba(0, 0, 0, 0.35)",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: "38px",
+                                        height: "38px",
+                                        flexShrink: 0,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderRadius: "10px",
+                                        background: error ? "#3b1d2a" : "#173b32",
+                                        color: error ? "#fb7185" : "#34d399",
+                                        fontSize: "20px",
+                                        fontWeight: 700,
+                                    }}
+                                >
+                                    {error ? "!" : "✓"}
+                                </div>
+
+                                <div style={{ flex: 1 }}>
+                                    <strong
+                                        style={{
+                                            display: "block",
+                                            color: "#ffffff",
+                                            fontSize: "15px",
+                                            marginBottom: "5px",
+                                        }}
+                                    >
+                                        {error
+                                            ? "Something went wrong"
+                                            : subscription?.planCode === "PREMIUM"
+                                                ? "Welcome to Premium!"
+                                                : "Switched to Free"}
+                                    </strong>
+
+                                    <p
+                                        style={{
+                                            color: "#94a3b8",
+                                            fontSize: "13px",
+                                            lineHeight: "1.5",
+                                            margin: 0,
+                                        }}
+                                    >
+                                        {error
+                                            ? error
+                                            : subscription?.planCode === "PREMIUM"
+                                                ? "Unlimited analytics is now available."
+                                                : "Your Free plan is now active."}
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    aria-label="Close notification"
+                                    onClick={() => {
+                                        setSuccess("");
+                                        setError("");
+                                    }}
+                                    style={{
+                                        background: "transparent",
+                                        border: "none",
+                                        color: "#94a3b8",
+                                        cursor: "pointer",
+                                        fontSize: "20px",
+                                        padding: 0,
+                                    }}
+                                >
+                                    ×
+                                </button>
+                            </div>
                         )}
 
-                        {success && (
-                            <p className="profile-success">
-                                {success}
-                            </p>
-                        )}
                     </>
                 )}
 

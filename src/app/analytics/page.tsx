@@ -22,11 +22,47 @@ interface DashboardEvolutionPoint {
     playedAt: string;
     gameCode: string;
     result: string;
+    category: "COMPETITIVE" | "CASUAL" | "UNKNOWN";
     kda: number;
     kills: number;
     deaths: number;
     assists: number;
 }
+
+interface DashboardHistoryMatch extends DashboardEvolutionPoint {
+    score: number | null;
+}
+
+interface DashboardHistoryResponse {
+    matches: DashboardHistoryMatch[];
+    totalMatches: number;
+    page: number;
+    pageSize: number;
+    hasMore: boolean;
+}
+
+interface SubscriptionResponse {
+    planCode: "FREE" | "PREMIUM";
+    unlimitedAnalytics: boolean;
+    active: boolean;
+}
+
+interface PerformancePeriodStats {
+    totalMatches: number;
+    averageKda: number;
+    winRate: number;
+    averageKills: number;
+}
+
+interface DashboardPerformanceInsightsResponse {
+    currentPeriod: PerformancePeriodStats;
+    previousPeriod: PerformancePeriodStats;
+    kdaChangePercent: number | null;
+    winRateChangePoints: number | null;
+    killsChangePercent: number | null;
+}
+
+
 
 export default function AnalyticsPage() {
     const router = useRouter();
@@ -46,55 +82,73 @@ export default function AnalyticsPage() {
     const [selectedDays, setSelectedDays] =
         useState("30");
     const [selectedResult, setSelectedResult] = useState("ALL");
-    const [selectedMinKda, setSelectedMinKda] = useState("ALL")
-    const [showAllMatches, setShowAllMatches] = useState(false);
+    const [selectedMinKda, setSelectedMinKda] = useState("ALL");
+    const [selectedCategory, setSelectedCategory] = useState("ALL");
+    const [historyMatches, setHistoryMatches] =
+        useState<DashboardHistoryMatch[]>([]);
 
+    const [historyPage, setHistoryPage] =
+        useState(0);
+
+    const [historyTotal, setHistoryTotal] =
+        useState(0);
+
+    const [historyHasMore, setHistoryHasMore] =
+        useState(false);
+
+    const [historyLoading, setHistoryLoading] =
+        useState(false);
+
+    const [historyError, setHistoryError] =
+        useState<string | null>(null);
+
+
+    const [subscription, setSubscription] =
+        useState<SubscriptionResponse | null>(null);
+
+    const [subscriptionLoading, setSubscriptionLoading] =
+        useState(true);
+
+    const [subscriptionError, setSubscriptionError] =
+        useState(false);
+
+    const [showPremiumNotice, setShowPremiumNotice] =
+        useState(false);
+
+    const [performanceInsights, setPerformanceInsights] =
+        useState<DashboardPerformanceInsightsResponse | null>(null);
+
+    const [insightsLoading, setInsightsLoading] =
+        useState(false);
+
+    const [insightsError, setInsightsError] =
+        useState<string | null>(null);
 
 
 
     useEffect(() => {
-        if (!selectedGame) {
-            return;
-        }
+        let cancelled = false;
 
-        async function loadAnalytics() {
-
-            const daysParam =
-                selectedDays === "ALL"
-                    ? ""
-                    : `&days=${selectedDays}`;
-            setLoading(true);
+        async function loadSubscription() {
             try {
+                const response = await authenticatedFetch(
+                    "http://localhost:8080/api/subscription/me"
+                );
 
-                const summaryResponse =
-                    await authenticatedFetch(
-                        `http://localhost:8080/api/dashboard/summary?gameCode=${selectedGame}${daysParam}`
-                    );
-
-                const evolutionResponse =
-                    await authenticatedFetch(
-                        `http://localhost:8080/api/dashboard/evolution?gameCode=${selectedGame}&limit=50${daysParam}`
-                    );
-
-
-                if (
-                    !summaryResponse.ok ||
-                    !evolutionResponse.ok
-                ) {
-                    throw new Error(
-                        "Não foi possível carregar os dados de analytics."
-                    );
+                if (!response.ok) {
+                    throw new Error("Failed to load subscription.");
                 }
 
-                const summaryData: DashboardSummary =
-                    await summaryResponse.json();
+                const data: SubscriptionResponse =
+                    await response.json();
 
-                const evolutionData: DashboardEvolutionPoint[] =
-                    await evolutionResponse.json();
+                if (!cancelled) {
+                    setSubscription(data);
+                }
 
-                setSummary(summaryData);
-                setEvolution(evolutionData);
             } catch (error) {
+                if (cancelled) return;
+
                 console.error(error);
 
                 if (
@@ -105,47 +159,549 @@ export default function AnalyticsPage() {
                     )
                 ) {
                     router.replace("/login");
+                    return;
                 }
+
+                setSubscriptionError(true);
+
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setSubscriptionLoading(false);
+                }
             }
         }
 
-        loadAnalytics();
-    }, [router, selectedGame, selectedDays]);
+        void loadSubscription();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [router]);
 
 
+    useEffect(() => {
+        let cancelled = false;
+
+        async function refreshSubscriptionOnFocus() {
+            try {
+                const response = await authenticatedFetch(
+                    "http://localhost:8080/api/subscription/me"
+                );
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data: SubscriptionResponse =
+                    await response.json();
+
+                if (cancelled) {
+                    return;
+                }
+
+                setSubscription(data);
+
+                const hasPremiumAccess =
+                    data.planCode === "PREMIUM" &&
+                    data.active &&
+                    data.unlimitedAnalytics;
+
+                if (!hasPremiumAccess) {
+                    setPerformanceInsights(null);
+
+                    if (selectedDays === "ALL") {
+                        setShowPremiumNotice(true);
+                        setSelectedDays("30");
+                    }
+                }
+
+            } catch (error) {
+                if (!cancelled) {
+                    console.error(
+                        "Failed to refresh subscription:",
+                        error
+                    );
+                }
+            }
+        }
+
+        window.addEventListener(
+            "focus",
+            refreshSubscriptionOnFocus
+        );
+
+        return () => {
+            cancelled = true;
+
+            window.removeEventListener(
+                "focus",
+                refreshSubscriptionOnFocus
+            );
+        };
+
+    }, [selectedDays]);
+
+
+
+    useEffect(() => {
+        if (
+            !selectedGame ||
+            subscription?.planCode !== "PREMIUM" ||
+            !subscription.active ||
+            !subscription.unlimitedAnalytics
+        ) {
+            return;
+        }
+
+        let cancelled = false;
+
+        async function loadPerformanceInsights() {
+            setInsightsLoading(true);
+            setInsightsError(null);
+            setPerformanceInsights(null);
+
+            try {
+                const params = new URLSearchParams({
+                    gameCode: selectedGame,
+                });
+
+                const response = await authenticatedFetch(
+                    `http://localhost:8080/api/dashboard/performance-insights?${params.toString()}`
+                );
+
+                if (response.status === 403) {
+                    if (!cancelled) {
+                        setInsightsError(
+                            "Premium access is required for Performance Insights."
+                        );
+                    }
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error("Failed to load Performance Insights.");
+                }
+
+                const data: DashboardPerformanceInsightsResponse =
+                    await response.json();
+
+                if (!cancelled) {
+                    setPerformanceInsights(data);
+                }
+
+            } catch (error) {
+                if (cancelled) return;
+
+                console.error(error);
+
+                if (
+                    error instanceof Error &&
+                    (
+                        error.message === "SESSION_EXPIRED" ||
+                        error.message === "NO_ACCESS_TOKEN"
+                    )
+                ) {
+                    router.replace("/login");
+                    return;
+                }
+
+                setInsightsError(
+                    "Unable to load Performance Insights."
+                );
+
+            } finally {
+                if (!cancelled) {
+                    setInsightsLoading(false);
+                }
+            }
+        }
+
+        void loadPerformanceInsights();
+
+        return () => {
+            cancelled = true;
+        };
+
+    }, [
+        router,
+        selectedGame,
+        subscription?.planCode,
+        subscription?.active,
+        subscription?.unlimitedAnalytics
+    ]);
+
+
+    useEffect(() => {
+            if (!selectedGame) {
+                return;
+            }
+
+            let cancelled = false;
+
+            async function loadAnalytics() {
+                setLoading(true);
+
+                try {
+                    const params = new URLSearchParams({
+                        gameCode: selectedGame,
+                    });
+
+                    if (selectedDays !== "ALL") {
+                        params.set("days", selectedDays);
+                    }
+
+                    // Carregar as estatísticas gerais
+                    const summaryResponse = await authenticatedFetch(
+                        `http://localhost:8080/api/dashboard/summary?${params.toString()}`
+                    );
+
+
+                    if (summaryResponse.status === 403 && selectedDays === "ALL") {
+                        if (!cancelled) {
+                            setShowPremiumNotice(true);
+                            setSelectedDays("30");
+                        }
+                        return;
+                    }
+
+                    if (!summaryResponse.ok) {
+                        throw new Error("Failed to load analytics summary.");
+                    }
+
+
+                    const summaryData: DashboardSummary =
+                        await summaryResponse.json();
+
+                    // Carregar todas as páginas do histórico
+                    const allMatches: DashboardEvolutionPoint[] = [];
+
+                    let page = 0;
+                    let hasMore = true;
+
+                    while (hasMore) {
+                        const pageParams = new URLSearchParams(params);
+
+                        pageParams.set("page", String(page));
+                        pageParams.set("pageSize", "50");
+
+                        const historyResponse = await authenticatedFetch(
+                            `http://localhost:8080/api/dashboard/history?${pageParams.toString()}`
+                        );
+
+                        if (historyResponse.status === 403 && selectedDays === "ALL") {
+                            if (!cancelled) {
+                                setShowPremiumNotice(true);
+                                setSelectedDays("30");
+                            }
+                            return;
+                        }
+
+                        if (!historyResponse.ok) {
+                            throw new Error("Failed to load analytics history.");
+                        }
+
+                        const historyData: DashboardHistoryResponse =
+                            await historyResponse.json();
+
+                        allMatches.push(...historyData.matches);
+
+                        if (historyData.hasMore && historyData.matches.length === 0) {
+                            throw new Error("Invalid history pagination response.");
+                        }
+
+                        hasMore = historyData.hasMore;
+                        page++;
+                    }
+
+                    if (cancelled) {
+                        return;
+                    }
+
+                    // O backend devolve primeiro as partidas recentes.
+                    // O gráfico precisa da ordem cronológica.
+                    setSummary(summaryData);
+                    setEvolution([...allMatches].reverse());
+
+                } catch (error) {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    console.error(error);
+
+                    if (
+                        error instanceof Error &&
+                        (
+                            error.message === "SESSION_EXPIRED" ||
+                            error.message === "NO_ACCESS_TOKEN"
+                        )
+                    ) {
+                        router.replace("/login");
+                        return;
+                    }
+
+                    setSummary(null);
+                    setEvolution([]);
+
+                } finally {
+                    if (!cancelled) {
+                        setLoading(false);
+                    }
+                }
+            }
+
+            void loadAnalytics();
+
+            return () => {
+                cancelled = true;
+            };
+
+        }, [router, selectedGame, selectedDays]);
+
+
+    useEffect(() => {
+        let cancelled = false;
+
+        if (!selectedGame) {
+            return;
+        }
+
+        async function loadHistory() {
+            setHistoryLoading(true);
+            setHistoryError(null);
+            setHistoryMatches([]);
+            setHistoryPage(0);
+            setHistoryTotal(0);
+            setHistoryHasMore(false);
+
+            const params = new URLSearchParams({
+                gameCode: selectedGame,
+                page: "0",
+                pageSize: "10",
+            });
+
+            if (selectedDays !== "ALL") {
+                params.set("days", selectedDays);
+            }
+
+            if (selectedResult !== "ALL") {
+                params.set("result", selectedResult);
+            }
+
+            if (selectedCategory !== "ALL") {
+                params.set("category", selectedCategory);
+            }
+
+            if (selectedMinKda !== "ALL") {
+                params.set("minKda", selectedMinKda);
+            }
+
+            try {
+                const response = await authenticatedFetch(
+                    `http://localhost:8080/api/dashboard/history?${params.toString()}`
+                );
+
+
+                if (response.status === 403 && selectedDays === "ALL") {
+                    if (!cancelled) {
+                        setShowPremiumNotice(true);
+                        setSelectedDays("30");
+                    }
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error("Failed to load match history.");
+                }
+
+
+                const data: DashboardHistoryResponse =
+                    await response.json();
+
+                if (cancelled) return;
+
+                setHistoryMatches(data.matches);
+                setHistoryPage(data.page);
+                setHistoryTotal(data.totalMatches);
+                setHistoryHasMore(data.hasMore);
+
+            } catch (error) {
+                if (cancelled) return;
+
+                console.error(error);
+
+                if (
+                    error instanceof Error &&
+                    (
+                        error.message === "SESSION_EXPIRED" ||
+                        error.message === "NO_ACCESS_TOKEN"
+                    )
+                ) {
+                    router.replace("/login");
+                    return;
+                }
+
+                setHistoryError("Unable to load match history.");
+
+            } finally {
+                if (!cancelled) {
+                    setHistoryLoading(false);
+                }
+            }
+        }
+
+        void loadHistory();
+
+        return () => {
+            cancelled = true;
+        };
+
+    }, [
+        router,
+        selectedGame,
+        selectedDays,
+        selectedResult,
+        selectedCategory,
+        selectedMinKda
+    ]);
+
+
+    async function loadMoreMatches() {
+        if (!selectedGame || !historyHasMore || historyLoading) {
+            return;
+        }
+
+        const nextPage = historyPage + 1;
+
+        const params = new URLSearchParams({
+            gameCode: selectedGame,
+            page: String(nextPage),
+            pageSize: "10",
+        });
+
+        if (selectedDays !== "ALL") {
+            params.set("days", selectedDays);
+        }
+
+        if (selectedResult !== "ALL") {
+            params.set("result", selectedResult);
+        }
+
+        if (selectedCategory !== "ALL") {
+            params.set("category", selectedCategory);
+        }
+
+        if (selectedMinKda !== "ALL") {
+            params.set("minKda", selectedMinKda);
+        }
+
+        setHistoryLoading(true);
+        setHistoryError(null);
+
+        try {
+            const response = await authenticatedFetch(
+                `http://localhost:8080/api/dashboard/history?${params.toString()}`
+            );
+
+            if (response.status === 403 && selectedDays === "ALL") {
+                setShowPremiumNotice(true);
+                setSelectedDays("30");
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error("Failed to load more matches.");
+            }
+
+            const data: DashboardHistoryResponse =
+                await response.json();
+
+            setHistoryMatches((previous) => [
+                ...previous,
+                ...data.matches,
+            ]);
+
+            setHistoryPage(data.page);
+            setHistoryTotal(data.totalMatches);
+            setHistoryHasMore(data.hasMore);
+
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (
+                    error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN"
+                )
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setHistoryError("Unable to load more matches.");
+
+        } finally {
+            setHistoryLoading(false);
+        }
+    }
+
+    function showLessMatches() {
+        setHistoryMatches((previous) => previous.slice(0, 10));
+        setHistoryPage(0);
+        setHistoryHasMore(historyTotal > 10);
+        setHistoryError(null);
+    }
+
+    const isPremium =
+        subscription?.planCode === "PREMIUM" &&
+        subscription.active &&
+        subscription.unlimitedAnalytics;
 
     const filteredEvolution = evolution.filter((point) => {
         const matchesResult =
             selectedResult === "ALL" ||
             point.result === selectedResult;
 
+        const matchesCategory =
+            selectedCategory === "ALL" ||
+            point.category === selectedCategory;
+
         const matchesKda =
             selectedMinKda === "ALL" ||
             point.kda >= Number(selectedMinKda);
 
-        return matchesResult && matchesKda;
+        return matchesResult && matchesCategory && matchesKda;
     });
 
-    const recentMatches = [...filteredEvolution].reverse();
+    const MAX_CHART_POINTS = 50;
 
-    const visibleMatches = showAllMatches
-        ? recentMatches
-        : recentMatches.slice(0, 10);
+    const chartEvolution =
+        filteredEvolution.length <= MAX_CHART_POINTS
+            ? filteredEvolution
+            : Array.from(
+                { length: MAX_CHART_POINTS },
+                (_, index) => {
+                    const position = Math.round(
+                        index *
+                        (filteredEvolution.length - 1) /
+                        (MAX_CHART_POINTS - 1)
+                    );
 
-
+                    return filteredEvolution[position];
+                }
+            );
 
     const maxChartKda = Math.max(
         1,
-        ...filteredEvolution.map((point) => point.kda)
+        ...chartEvolution.map((point) => point.kda)
     );
 
-    const chartPoints = filteredEvolution.map((point, index) => {
+    const chartPoints = chartEvolution.map((point, index) => {
         const x =
-            filteredEvolution.length === 1
+            chartEvolution.length === 1
                 ? 500
-                : 50 + (index / (filteredEvolution.length - 1)) * 900;
+                : 50 + (index / (chartEvolution.length - 1)) * 900;
 
         const y =
             210 - (point.kda / maxChartKda) * 160;
@@ -263,7 +819,15 @@ export default function AnalyticsPage() {
                         <select
                             value={selectedDays}
                             onChange={(event) => {
-                                setSelectedDays(event.target.value);
+                                const nextPeriod = event.target.value;
+
+                                if (nextPeriod === "ALL" && !isPremium) {
+                                    setShowPremiumNotice(true);
+                                    return;
+                                }
+
+                                setShowPremiumNotice(false);
+                                setSelectedDays(nextPeriod);
                             }}
                             style={{
                                 background: "#10151f",
@@ -276,10 +840,113 @@ export default function AnalyticsPage() {
                         >
                             <option value="7">Last 7 days</option>
                             <option value="30">Last 30 days</option>
-                            <option value="ALL">All time</option>
+                            <option value="ALL">
+                                {isPremium ? "All time" : "All time (Premium)"}
+                            </option>
                         </select>
                     </label>
                 </div>
+
+
+                {showPremiumNotice && !isPremium && (
+                    <div
+                        role="alert"
+                        style={{
+                            background: "linear-gradient(135deg, #19152e, #111722)",
+                            border: "1px solid #6455b8",
+                            borderRadius: "14px",
+                            padding: "24px",
+                            marginBottom: "24px",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                gap: "16px",
+                            }}
+                        >
+                            <div>
+                <span
+                    style={{
+                        color: "#a78bfa",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        letterSpacing: "1px",
+                    }}
+                >
+                    PREMIUM FEATURE
+                </span>
+
+                                <h3
+                                    style={{
+                                        color: "#ffffff",
+                                        fontSize: "20px",
+                                        marginTop: "10px",
+                                        marginBottom: "10px",
+                                    }}
+                                >
+                                    {subscriptionLoading
+                                        ? "Checking your subscription..."
+                                        : subscriptionError
+                                            ? "Unable to verify subscription"
+                                            : "Unlock unlimited analytics"}
+                                </h3>
+
+                                <p
+                                    style={{
+                                        color: "#94a3b8",
+                                        fontSize: "14px",
+                                        lineHeight: 1.6,
+                                        margin: 0,
+                                    }}
+                                >
+                                    {subscriptionLoading
+                                        ? "Please try again once your subscription has loaded."
+                                        : subscriptionError
+                                            ? "We couldn't verify your plan. Please refresh the page and try again."
+                                            : "Upgrade to Premium to explore your complete match history and analyze your performance without time limits."}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowPremiumNotice(false)}
+                                aria-label="Close premium notice"
+                                style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    color: "#94a3b8",
+                                    fontSize: "22px",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {!subscriptionLoading && !subscriptionError && (
+                            <button
+                                type="button"
+                                onClick={() => router.push("/subscription")}
+                                style={{
+                                    background: "#7955ff",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    borderRadius: "9px",
+                                    padding: "12px 22px",
+                                    fontSize: "14px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    marginTop: "20px",
+                                }}
+                            >
+                                Upgrade to Premium
+                            </button>
+                        )}
+                    </div>
+                )}
 
 
                 {!selectedGame ? (
@@ -390,9 +1057,167 @@ export default function AnalyticsPage() {
 
                         </section>
 
+
+                        <section
+                            className="analytics-panel"
+                            style={{ marginBottom: "24px" }}
+                        >
+                            <p className="eyebrow">PREMIUM ANALYTICS</p>
+                            <h2>Performance Insights</h2>
+
+                            <p style={{ color: "#94a3b8", marginTop: "8px" }}>
+                                Last 7 days vs. previous 7 days
+                            </p>
+                            {isPremium && performanceInsights && (
+                                <p
+                                    style={{
+                                        color: "#8295b5",
+                                        fontSize: "13px",
+                                        marginTop: "8px",
+                                    }}
+                                >
+                                    Matches played: {performanceInsights.currentPeriod.totalMatches}
+                                    {" "}vs.{" "}
+                                    {performanceInsights.previousPeriod.totalMatches} in the previous period
+                                </p>
+                            )}
+
+                            {subscriptionLoading ? (
+                                <p>Checking your subscription...</p>
+                            ) : !isPremium ? (
+                                <div style={{ marginTop: "20px" }}>
+                                    <p style={{ color: "#94a3b8" }}>
+                                        Unlock advanced performance comparisons
+                                        with ClutchMetrics Premium.
+                                    </p>
+
+
+                                    <a
+                                        href="/subscription"
+                                        style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            background: "#7955ff",
+                                            color: "#ffffff",
+                                            padding: "12px 20px",
+                                            borderRadius: "9px",
+                                            fontSize: "14px",
+                                            fontWeight: 600,
+                                            textDecoration: "none",
+                                            marginTop: "16px",
+                                            width: "fit-content",
+                                        }}
+                                    >
+                                        Upgrade to Premium
+                                    </a>
+
+                                </div>
+                            ) : insightsLoading ? (
+                                <p style={{ marginTop: "20px" }}>
+                                    Loading Performance Insights...
+                                </p>
+                            ) : insightsError ? (
+                                <p style={{ color: "#fb7185", marginTop: "20px" }}>
+                                    {insightsError}
+                                </p>
+                            ) : performanceInsights ? (
+                                <div
+                                    style={{
+                                        display: "grid",
+                                        gridTemplateColumns:
+                                            "repeat(auto-fit, minmax(180px, 1fr))",
+                                        gap: "16px",
+                                        marginTop: "24px",
+                                    }}
+                                >
+                                    {[
+                                        {
+                                            label: "Average KDA",
+                                            current:
+                                            performanceInsights.currentPeriod.averageKda,
+                                            previous:
+                                            performanceInsights.previousPeriod.averageKda,
+                                            change:
+                                            performanceInsights.kdaChangePercent,
+                                            suffix: "%",
+                                        },
+                                        {
+                                            label: "Win rate",
+                                            current:
+                                            performanceInsights.currentPeriod.winRate,
+                                            previous:
+                                            performanceInsights.previousPeriod.winRate,
+                                            change:
+                                            performanceInsights.winRateChangePoints,
+                                            suffix: "pp",
+                                        },
+                                        {
+                                            label: "Average kills",
+                                            current:
+                                            performanceInsights.currentPeriod.averageKills,
+                                            previous:
+                                            performanceInsights.previousPeriod.averageKills,
+                                            change:
+                                            performanceInsights.killsChangePercent,
+                                            suffix: "%",
+                                        },
+                                    ].map((metric) => (
+                                        <div
+                                            key={metric.label}
+                                            style={{
+                                                background: "#0c111b",
+                                                border: "1px solid #222c3d",
+                                                borderRadius: "12px",
+                                                padding: "20px",
+                                            }}
+                                        >
+                                            <p style={{ color: "#94a3b8" }}>
+                                                {metric.label}
+                                            </p>
+
+                                            <h3 style={{
+                                                fontSize: "28px",
+                                                margin: "14px 0",
+                                            }}>
+                                                {metric.current}{metric.label === "Win rate" ? "%" : ""}
+                                            </h3>
+
+                                            <p style={{
+                                                color: "#94a3b8",
+                                                fontSize: "13px",
+                                            }}>
+                                                Previous: {metric.previous}{metric.label === "Win rate" ? "%" : ""}
+                                            </p>
+
+                                            <p style={{
+                                                color:
+                                                    metric.change === null
+                                                        ? "#94a3b8"
+                                                        : metric.change >= 0
+                                                            ? "#34d399"
+                                                            : "#fb7185",
+                                                marginTop: "10px",
+                                                fontWeight: 600,
+                                            }}>
+                                                {metric.change === null
+                                                    ? "Not enough data to compare"
+                                                    : `${metric.change > 0 ? "+" : ""}${metric.change}${metric.suffix === "pp" ? " " : ""}${metric.suffix}`}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p style={{ marginTop: "20px", color: "#94a3b8" }}>
+                                    No performance insights available.
+                                </p>
+                            )}
+                        </section>
+
+
                         <section className="analytics-panel analytics-evolution">
                             <p className="eyebrow">
-                                KDA EVOLUTION
+                                PERFORMANCE TRENDS
                             </p>
 
 
@@ -439,6 +1264,39 @@ export default function AnalyticsPage() {
                                         <option value="DRAW">Draws</option>
                                     </select>
                                 </label>
+
+
+                                <label
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "12px",
+                                        color: "#94a3b8",
+                                        fontSize: "13px",
+                                    }}
+                                >
+                                    Category
+                                    <select
+                                        value={selectedCategory}
+                                        onChange={(event) =>
+                                            setSelectedCategory(event.target.value)
+                                        }
+                                        style={{
+                                            background: "#10151f",
+                                            color: "#f8fafc",
+                                            border: "1px solid #293244",
+                                            borderRadius: "10px",
+                                            padding: "10px 14px",
+                                            minWidth: "150px",
+                                        }}
+                                    >
+                                        <option value="ALL">All categories</option>
+                                        <option value="COMPETITIVE">Competitive</option>
+                                        <option value="CASUAL">Casual</option>
+                                        <option value="UNKNOWN">Unknown</option>
+                                    </select>
+                                </label>
+
 
                                 <label
                                     style={{
@@ -560,75 +1418,7 @@ export default function AnalyticsPage() {
                                                 />
 
 
-                                                {hoveredPointId === point.matchId && (
-                                                    <g
-                                                        pointerEvents="none"
-                                                        transform={`translate(
-            ${Math.min(Math.max(point.x, 160), 840)},
-            ${point.y <= 125 ? point.y + 15 : point.y - 115}
-        )`}
-                                                    >
-                                                        <rect
-                                                            x="-160"
-                                                            y="0"
-                                                            width="320"
-                                                            height="105"
-                                                            rx="12"
-                                                            fill="#161d30"
-                                                            stroke="#6455b8"
-                                                            strokeWidth="1.5"
-                                                        />
 
-                                                        <text
-                                                            x="-144"
-                                                            y="25"
-                                                            fill="#c4b5fd"
-                                                            fontSize="14"
-                                                            fontWeight="600"
-                                                        >
-
-                                                            {new Date(point.playedAt).toLocaleString("en-GB", {
-                                                                day: "2-digit",
-                                                                month: "2-digit",
-                                                                year: "numeric",
-                                                                hour: "2-digit",
-                                                                minute: "2-digit",
-                                                                hour12: false,
-                                                            })}
-
-                                                        </text>
-
-                                                        <text
-                                                            x="144"
-                                                            y="25"
-                                                            textAnchor="end"
-                                                            fill={point.result === "WIN" ? "#34d399" : "#fb7185"}
-                                                            fontSize="13"
-                                                            fontWeight="600"
-                                                        >
-                                                            {point.result}
-                                                        </text>
-
-                                                        <text
-                                                            x="-144"
-                                                            y="57"
-                                                            fill="#ffffff"
-                                                            fontSize="18"
-                                                            fontWeight="700"
-                                                        >
-                                                            KDA {point.kda.toFixed(2)}
-                                                        </text>
-
-                                                        <text
-                                                            x="-144"
-                                                            y="84"
-                                                            fill="#9caec9"
-                                                            fontSize="14"
-                                                        >
-                                                            {`Kills ${point.kills}  ·  Deaths ${point.deaths}  ·  Assists ${point.assists}`}
-                                                        </text>
-                                                    </g>
-                                                )}
 
                                             </g>
                                         ))}
@@ -647,6 +1437,84 @@ export default function AnalyticsPage() {
                                                 })}
                                             </text>
                                         ))}
+
+                                        {chartPoints
+                                            .filter((point) => point.matchId === hoveredPointId)
+                                            .map((point) => (
+                                                <g
+                                                    key={`tooltip-${point.matchId}`}
+                                                    pointerEvents="none"
+                                                    transform={`translate(
+                ${Math.min(Math.max(point.x, 160), 840)},
+                ${point.y <= 125 ? point.y + 15 : point.y - 115}
+            )`}
+                                                >
+                                                    <rect
+                                                        x="-160"
+                                                        y="0"
+                                                        width="320"
+                                                        height="105"
+                                                        rx="12"
+                                                        fill="#161d30"
+                                                        stroke="#6455b8"
+                                                        strokeWidth="1.5"
+                                                    />
+
+                                                    <text
+                                                        x="-144"
+                                                        y="25"
+                                                        fill="#c4b5fd"
+                                                        fontSize="14"
+                                                        fontWeight="600"
+                                                    >
+                                                        {new Date(point.playedAt).toLocaleString("en-GB", {
+                                                            day: "2-digit",
+                                                            month: "2-digit",
+                                                            year: "numeric",
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                            hour12: false,
+                                                        })}
+                                                    </text>
+
+                                                    <text
+                                                        x="144"
+                                                        y="25"
+                                                        textAnchor="end"
+                                                        fill={
+                                                            point.result === "WIN"
+                                                                ? "#34d399"
+                                                                : point.result === "LOSS"
+                                                                    ? "#fb7185"
+                                                                    : "#94a3b8"
+                                                        }
+                                                        fontSize="13"
+                                                        fontWeight="600"
+                                                    >
+                                                        {point.result}
+                                                    </text>
+
+                                                    <text
+                                                        x="-144"
+                                                        y="57"
+                                                        fill="#ffffff"
+                                                        fontSize="18"
+                                                        fontWeight="700"
+                                                    >
+                                                        KDA {point.kda.toFixed(2)}
+                                                    </text>
+
+                                                    <text
+                                                        x="-144"
+                                                        y="84"
+                                                        fill="#9caec9"
+                                                        fontSize="14"
+                                                    >
+                                                        {`Kills ${point.kills} · Deaths ${point.deaths} · Assists ${point.assists}`}
+                                                    </text>
+                                                </g>
+                                            ))}
+
                                     </svg>
                                 ) : (
                                     <div
@@ -662,7 +1530,7 @@ export default function AnalyticsPage() {
 
                                         <p style={{ fontSize: "13px" }}>
                                             {evolution.length > 0
-                                                ? "No matches match your selected filters. Try adjusting Result or KDA."
+                                                ? "No matches match your selected filters. Try adjusting Result, Category or KDA."
                                                 : "No matches available for this game and period."}
                                         </p>
                                     </div>
@@ -675,8 +1543,27 @@ export default function AnalyticsPage() {
 
 
                             <div className="analytics-evolution-list">
+                                {historyLoading && (
+                                    <p style={{
+                                        color: "#94a3b8",
+                                        textAlign: "center",
+                                        padding: "24px 0"
+                                    }}>
+                                        Loading matches...
+                                    </p>
+                                )}
 
-                                {visibleMatches.length === 0 && (
+                                {historyError && (
+                                    <p style={{
+                                        color: "#fb7185",
+                                        textAlign: "center",
+                                        padding: "24px 0"
+                                    }}>
+                                        {historyError}
+                                    </p>
+                                )}
+
+                                {!historyLoading && !historyError && historyMatches.length === 0 && (
                                     <p
                                         style={{
                                             color: "#94a3b8",
@@ -689,7 +1576,7 @@ export default function AnalyticsPage() {
                                     </p>
                                 )}
 
-                                {visibleMatches.map((point) => (
+                                {historyMatches.map((point) => (
                                     <div
                                         className="analytics-evolution-row"
                                         key={point.matchId}
@@ -732,37 +1619,71 @@ export default function AnalyticsPage() {
                                                 {point.assists}
                                             </strong>
                                         </div>
+                                        <div>
+                                            <small>SCORE</small>
+                                            <strong>
+                                                {point.score != null
+                                                    ? point.score.toLocaleString("en-GB")
+                                                    : "—"}
+                                            </strong>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-                            {recentMatches.length > 10 && (
+
+                            {(historyHasMore || historyMatches.length > 10) && (
                                 <div
                                     style={{
                                         display: "flex",
                                         justifyContent: "center",
+                                        gap: "12px",
                                         marginTop: "24px",
                                     }}
                                 >
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowAllMatches(!showAllMatches)}
-                                        style={{
-                                            background: "#161d30",
-                                            color: "#c4b5fd",
-                                            border: "1px solid #3b356b",
-                                            borderRadius: "10px",
-                                            padding: "12px 24px",
-                                            cursor: "pointer",
-                                            fontSize: "14px",
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {showAllMatches
-                                            ? "Show less"
-                                            : `Show more (${recentMatches.length - 10} remaining)`}
-                                    </button>
+                                    {historyMatches.length > 10 && (
+                                        <button
+                                            type="button"
+                                            onClick={showLessMatches}
+                                            disabled={historyLoading}
+                                            style={{
+                                                background: "#161d30",
+                                                color: "#c4b5fd",
+                                                border: "1px solid #3b356b",
+                                                borderRadius: "10px",
+                                                padding: "12px 24px",
+                                                cursor: historyLoading ? "wait" : "pointer",
+                                                fontSize: "14px",
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            Show less
+                                        </button>
+                                    )}
+
+                                    {historyHasMore && (
+                                        <button
+                                            type="button"
+                                            onClick={() => void loadMoreMatches()}
+                                            disabled={historyLoading}
+                                            style={{
+                                                background: "#161d30",
+                                                color: "#c4b5fd",
+                                                border: "1px solid #3b356b",
+                                                borderRadius: "10px",
+                                                padding: "12px 24px",
+                                                cursor: historyLoading ? "wait" : "pointer",
+                                                fontSize: "14px",
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            {historyLoading
+                                                ? "Loading..."
+                                                : `Show more (${historyTotal - historyMatches.length} remaining)`}
+                                        </button>
+                                    )}
                                 </div>
                             )}
+
                         </section>
                     </>
                 )}

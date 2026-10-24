@@ -74,6 +74,8 @@ export default function FeedPage() {
     const [deletingCommentId, setDeletingCommentId] =
         useState<number | null>(null);
     const [reportClipId, setReportClipId] = useState<number | null>(null);
+    const [openMoreMenuClipId, setOpenMoreMenuClipId] =
+        useState<number | null>(null);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedGame, setSelectedGame] = useState("ALL");
@@ -82,6 +84,7 @@ export default function FeedPage() {
     const [reportSubmitting, setReportSubmitting] = useState(false);
     const [reportError, setReportError] = useState("");
     const [reportSuccess, setReportSuccess] = useState("");
+    const [shareSuccess, setShareSuccess] = useState("");
 
 
     const feedGames = [
@@ -487,6 +490,22 @@ export default function FeedPage() {
         }
     }
 
+
+    async function handleShare(clipId: number) {
+        const clipUrl =
+            `${window.location.origin}/feed?clip=${clipId}`;
+
+        try {
+            await navigator.clipboard.writeText(clipUrl);
+
+            setShareSuccess("Clip link copied to clipboard!");
+        } catch (error) {
+            console.error(error);
+            setError("Could not copy the clip link.");
+        }
+    }
+
+
     return (
         <AppShell title="Feed">
             <div className="feed-page">
@@ -642,12 +661,17 @@ export default function FeedPage() {
                     </span>
                                     </div>
 
+
                                     <h2>{clip.title}</h2>
 
-                                    <p>
-                                        {clip.description ||
-                                            "No description."}
-                                    </p>
+                                    {clip.description?.trim() &&
+                                        clip.description.trim().toLowerCase() !==
+                                        clip.title.trim().toLowerCase() && (
+                                            <p className="feed-clip-description">
+                                                {clip.description}
+                                            </p>
+                                        )}
+
 
 
                                     <Link
@@ -694,25 +718,88 @@ export default function FeedPage() {
                                             }
                                         >
                                             <span className="feed-social-icon">💬</span>
+
                                             <span>
-      {clip.commentCount ?? 0} Comments
-    </span>
+                                            {clip.commentCount ?? 0}{" "}
+                                                    {(clip.commentCount ?? 0) === 1
+                                                        ? "Comment"
+                                                        : "Comments"}
+                                            </span>
+
+
                                         </button>
 
 
                                         <button
                                             type="button"
-                                            className="feed-comment-button feed-report-button"
-                                            onClick={() => setReportClipId(clip.id)}
+                                            className="feed-comment-button"
+                                            onClick={() => void handleShare(clip.id)}
+                                            aria-label="Copy clip link"
                                         >
-                                            <span className="feed-social-icon">⚑</span>
-                                            <span>Report</span>
+    <span className="feed-social-icon">
+        ↗
+    </span>
+                                            <span>Share</span>
                                         </button>
+
+
+
+                                        <div
+                                            className="feed-more-menu"
+                                            onBlur={(event) => {
+                                                if (!event.currentTarget.contains(event.relatedTarget)) {
+                                                    setOpenMoreMenuClipId(null);
+                                                }
+                                            }}
+                                        >
+                                            <button
+                                                type="button"
+                                                className="feed-more-button"
+                                                aria-label="More clip options"
+                                                aria-expanded={openMoreMenuClipId === clip.id}
+                                                onClick={() =>
+                                                    setOpenMoreMenuClipId((current) =>
+                                                        current === clip.id ? null : clip.id
+                                                    )
+                                                }
+                                            >
+                                                ···
+                                            </button>
+
+                                            {openMoreMenuClipId === clip.id && (
+                                                <div className="feed-more-dropdown">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setOpenMoreMenuClipId(null);
+                                                            setReportClipId(clip.id);
+                                                        }}
+                                                    >
+                                                        <span aria-hidden="true">⚑</span>
+                                                        Report clip
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+
 
 
                                     </div>
                                     {openCommentsClipId === clip.id && (
                                         <div className="feed-comments">
+
+
+                                            <div className="feed-comments-heading">
+                                                <div>
+                                                    <h3>Comments</h3>
+                                                    <p>Join the conversation about this highlight.</p>
+                                                </div>
+
+                                                <span className="feed-comments-count">
+        {clip.commentCount ?? 0}
+    </span>
+                                            </div>
+
 
                                             {loadingComments ? (
                                                 <p className="feed-comments-empty">
@@ -720,7 +807,7 @@ export default function FeedPage() {
                                                 </p>
                                             ) : (commentsByClip[clip.id] ?? []).length === 0 ? (
                                                 <p className="feed-comments-empty">
-                                                    No comments yet.
+                                                    No comments yet. Be the first to share your thoughts!
                                                 </p>
                                             ) : (
                                                 <div className="feed-comments-list">
@@ -731,35 +818,72 @@ export default function FeedPage() {
                                                                 key={comment.id}
                                                             >
                                                                 <div className="feed-comment-header">
-                                                                    <div>
-                                                                        <strong>
-                                                                            {comment.username}
-                                                                        </strong>
 
-                                                                        <span>
-        {new Date(
-            comment.createdAt
-        ).toLocaleString("en-GB")}
-      </span>
+                                                                    <div className="feed-comment-user">
+                                                                        <div className="feed-comment-avatar">
+                                                                            {(comment.username?.trim().charAt(0) || "P").toUpperCase()}
+                                                                        </div>
+
+                                                                        <div className="feed-comment-user-details">
+                                                                            <strong>{comment.username}</strong>
+
+                                                                            <span>
+                                                                        {new Date(comment.createdAt).toLocaleString("en-GB")}
+                                                                    </span>
+                                                                        </div>
                                                                     </div>
+
+
 
                                                                     <button
                                                                         type="button"
                                                                         className="feed-delete-comment"
-                                                                        disabled={
-                                                                            deletingCommentId === comment.id
-                                                                        }
+                                                                        disabled={deletingCommentId === comment.id}
                                                                         onClick={() =>
-                                                                            handleDeleteComment(
-                                                                                clip.id,
-                                                                                comment.id
-                                                                            )
+                                                                            handleDeleteComment(clip.id, comment.id)
                                                                         }
+                                                                        style={{
+                                                                            display: "inline-flex",
+                                                                            alignItems: "center",
+                                                                            justifyContent: "center",
+                                                                            gap: "9px",
+                                                                            minHeight: "40px",
+                                                                            padding: "10px 15px",
+                                                                            borderRadius: "9px",
+                                                                            border: "1px solid rgba(251, 113, 133, 0.4)",
+                                                                            background: "rgba(251, 113, 133, 0.1)",
+                                                                            color: "#fb7185",
+                                                                            fontSize: "14px",
+                                                                            fontWeight: 600,
+                                                                            cursor: "pointer",
+                                                                        }}
                                                                     >
-                                                                        {deletingCommentId === comment.id
-                                                                            ? "Deleting..."
-                                                                            : "Delete"}
+                                                                        <svg
+                                                                            width="19"
+                                                                            height="19"
+                                                                            viewBox="0 0 24 24"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            strokeWidth="2"
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                            aria-hidden="true"
+                                                                            style={{ flexShrink: 0 }}
+                                                                        >
+                                                                            <path d="M3 6h18" />
+                                                                            <path d="M8 6V4h8v2" />
+                                                                            <path d="M19 6l-1 14H6L5 6" />
+                                                                            <path d="M10 11v6" />
+                                                                            <path d="M14 11v6" />
+                                                                        </svg>
+
+                                                                        <span style={{ fontSize: "14px" }}>
+        {deletingCommentId === comment.id
+            ? "Deleting..."
+            : "Delete"}
+    </span>
                                                                     </button>
+
                                                                 </div>
 
                                                                 <p>{comment.content}</p>
@@ -842,6 +966,15 @@ export default function FeedPage() {
                                                         }}
                                                     />
                                                 )}
+
+                                                {clip.durationSeconds != null &&
+                                                    clip.durationSeconds > 0 && (
+                                                        <span className="feed-up-next-duration">
+                                                {Math.floor(clip.durationSeconds / 60)}:
+                                                            {String(clip.durationSeconds % 60).padStart(2, "0")}
+                                                    </span>
+                                                    )}
+
                                             </div>
 
 
@@ -851,13 +984,7 @@ export default function FeedPage() {
                                                 <span>
                 {clip.gameName ?? "No game"}
               </span>
-
-                                                {clip.durationSeconds != null &&
-                                                    clip.durationSeconds > 0 && (
-                                                        <small>
-                                                            {clip.durationSeconds}s
-                                                        </small>
-                                                    )}
+                                                
                                             </div>
                                         </button>
                                     ))}
@@ -988,6 +1115,15 @@ export default function FeedPage() {
                     onClose={() => setReportSuccess("")}
                 />
             )}
+
+            {shareSuccess && (
+                <ClipToast
+                    message={shareSuccess}
+                    type="success"
+                    onClose={() => setShareSuccess("")}
+                />
+            )}
+
 
         </AppShell>
     );

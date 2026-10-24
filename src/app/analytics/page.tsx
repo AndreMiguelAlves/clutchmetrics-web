@@ -752,7 +752,7 @@ export default function AnalyticsPage() {
                     <h1>Analytics</h1>
 
                     <p>
-                        Detailed insights from your competitive matches.
+                        Explore your match history, performance trends and competitive progress.
                     </p>
                 </header>
 
@@ -1293,7 +1293,6 @@ export default function AnalyticsPage() {
                                         <option value="ALL">All categories</option>
                                         <option value="COMPETITIVE">Competitive</option>
                                         <option value="CASUAL">Casual</option>
-                                        <option value="UNKNOWN">Unknown</option>
                                     </select>
                                 </label>
 
@@ -1582,7 +1581,7 @@ export default function AnalyticsPage() {
                                         key={point.matchId}
                                     >
 
-                                        <span>
+                                        <span style={{ fontSize: "14px" }}>
                                             {new Date(point.playedAt).toLocaleString("en-GB", {
                                                 day: "2-digit",
                                                 month: "2-digit",

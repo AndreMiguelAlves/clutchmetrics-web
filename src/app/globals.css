@@ -2745,8 +2745,10 @@ a {
   gap: 10px;
 }
 
-.connect-form-grid input {
+.connect-form-grid input,
+.connect-form-grid select {
   width: 100%;
+  min-width: 0;
   padding: 11px 12px;
 
   background: #0b1017;
@@ -2755,13 +2757,24 @@ a {
 
   color: #f4f6fb;
   font: inherit;
+  font-size: 14px;
+}
+
+.connect-form-grid select {
+  cursor: pointer;
+}
+
+.connect-form-grid select option {
+  background: #0b1017;
+  color: #f4f6fb;
 }
 
 .connect-form-grid input::placeholder {
   color: #58657a;
 }
 
-.connect-form-grid input:focus {
+.connect-form-grid input:focus,
+.connect-form-grid select:focus {
   outline: none;
   border-color: #765cff;
 }
@@ -3000,10 +3013,10 @@ a {
     padding: 42px 48px;
   }
 
-  @media (max-width: 900px) {
-    .shared-app-shell {
-      grid-template-columns: 1fr;
-    }
+@media (max-width: 900px) {
+  .shared-app-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
     .shared-sidebar {
       display: none;
@@ -3013,9 +3026,12 @@ a {
       padding: 0 24px;
     }
 
-    .shared-page-content {
-      padding: 28px 24px;
-    }
+  .shared-page-content {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 28px 24px;
+  }
 
   }
 
@@ -3675,11 +3691,12 @@ a {
 
   .clips-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
   }
 
   .clip-card {
+    min-width: 0;
     overflow: hidden;
 
     background: #10151e;
@@ -3819,6 +3836,7 @@ a {
     margin-top: 14px;
 
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 10px;
   }
@@ -8149,6 +8167,708 @@ button.clip-delete-button:disabled {
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(52, 211, 153, 0.3);
 }
+
+
+/* ===== GAMING FEED - VIDEO ACTIONS ===== */
+
+.feed-watch-main .feed-social {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #273246;
+}
+
+.feed-watch-main .feed-social > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 17px;
+  border: 1px solid #2a354b;
+  border-radius: 999px;
+  background: #202839;
+  color: #e0e8f7;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+          background 0.2s ease,
+          border-color 0.2s ease,
+          transform 0.2s ease;
+}
+
+.feed-watch-main .feed-social > button:hover:not(:disabled) {
+  background: #303a52;
+  border-color: #7955ff;
+  transform: translateY(-1px);
+}
+
+.feed-watch-main .feed-social > button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.feed-watch-main .feed-social .feed-social-icon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.feed-watch-main .feed-social .feed-like-button.liked {
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.12);
+  border-color: rgba(251, 113, 133, 0.35);
+}
+
+.feed-watch-main .feed-social .feed-report-button {
+  margin-left: auto;
+  background: transparent;
+  color: #94a3b8;
+  border-color: transparent;
+}
+
+@media (max-width: 640px) {
+  .feed-watch-main .feed-social > button {
+    padding: 10px 13px;
+    font-size: 12px;
+  }
+
+  .feed-watch-main .feed-social .feed-report-button {
+    margin-left: 0;
+  }
+}
+
+
+/* ===== FEED - MORE OPTIONS MENU ===== */
+
+.feed-more-menu {
+  position: relative;
+  margin-left: auto;
+}
+
+.feed-more-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #2a354b;
+  border-radius: 50%;
+  background: #202839;
+  color: #e0e8f7;
+  font-size: 25px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.feed-more-button:hover,
+.feed-more-button[aria-expanded="true"] {
+  background: #303a52;
+  border-color: #7955ff;
+}
+
+.feed-more-dropdown {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid #303a52;
+  border-radius: 12px;
+  background: #171e2c;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.feed-more-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.feed-more-dropdown button:hover {
+  background: #273246;
+  color: #fb7185;
+}
+
+@media (max-width: 640px) {
+  .feed-more-menu {
+    margin-left: 0;
+  }
+}
+
+/* ===== GAMING FEED - VIDEO DETAILS ===== */
+
+.feed-watch-main .feed-card-content > h2 {
+  font-size: clamp(21px, 2vw, 26px);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+  color: #f8fafc;
+  margin: 18px 0 10px;
+}
+
+.feed-watch-main .feed-clip-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #94a3b8;
+  margin-bottom: 14px;
+}
+
+.feed-watch-main .feed-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  text-decoration: none;
+}
+
+.feed-watch-main .feed-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-watch-main .feed-author-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.feed-watch-main .feed-author:hover .feed-author-name {
+  color: #a78bfa;
+}
+
+.feed-watch-main .feed-author-caption {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ===== GAMING FEED - COMMENTS SECTION ===== */
+
+.feed-watch-main .feed-comments {
+  margin-top: 22px;
+  padding: 22px;
+  background: #111827;
+  border: 1px solid #293244;
+  border-radius: 14px;
+}
+
+.feed-comments-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.feed-comments-heading h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.feed-comments-heading p {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.feed-comments-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 9px;
+  border-radius: 50px;
+  background: rgba(121, 85, 255, 0.15);
+  color: #a78bfa;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .feed-watch-main .feed-comments {
+    padding: 16px;
+  }
+}
+
+/* ===== GAMING FEED - COMMENT AVATARS ===== */
+
+.feed-watch-main .feed-comment-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.feed-watch-main .feed-comment-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7955ff, #4930a8);
+  border: 1px solid #9d83ff;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.feed-watch-main .feed-comment-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.feed-watch-main .feed-comment-user-details strong {
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.feed-watch-main .feed-comment-user-details span {
+  color: #8295b5;
+  font-size: 12px;
+}
+
+.feed-watch-main .feed-comment > p {
+  margin: 10px 0 0 50px;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .feed-watch-main .feed-comment > p {
+    margin-left: 0;
+  }
+}
+
+/* ===== FEED - COMMENT USER ALIGNMENT ===== */
+
+.feed-watch-main .feed-comment-header .feed-comment-user {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  text-align: left;
+}
+
+.feed-watch-main .feed-comment-header .feed-comment-user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* ===== FEED - DELETE COMMENT BUTTON ===== */
+
+.feed-watch-main .feed-comments .feed-delete-comment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 8px 13px;
+  border: 1px solid rgba(251, 113, 133, 0.35);
+  border-radius: 8px;
+  background: rgba(251, 113, 133, 0.09);
+  color: #fb7185;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.feed-watch-main .feed-comments .feed-delete-comment:hover:not(:disabled) {
+  background: rgba(251, 113, 133, 0.18);
+  border-color: #fb7185;
+}
+
+.feed-watch-main .feed-comments .feed-delete-comment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== FEED - UP NEXT DURATION ===== */
+
+.feed-up-next-thumb {
+  position: relative;
+  overflow: hidden;
+}
+
+.feed-up-next-duration {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 5;
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.88);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* ===== FEED - UP NEXT INTERACTIONS ===== */
+
+.feed-up-next .feed-up-next-item {
+  cursor: pointer;
+  transition:
+          background 0.2s ease,
+          border-color 0.2s ease,
+          transform 0.2s ease;
+}
+
+.feed-up-next .feed-up-next-item:hover {
+  background: #222b3e;
+  border-color: rgba(121, 85, 255, 0.55);
+  transform: translateY(-2px);
+}
+
+.feed-up-next .feed-up-next-item:focus-visible {
+  outline: 2px solid #9575ff;
+  outline-offset: 3px;
+}
+
+.feed-up-next .feed-up-next-thumb img {
+  transition: transform 0.25s ease;
+}
+
+.feed-up-next .feed-up-next-item:hover .feed-up-next-thumb img {
+  transform: scale(1.05);
+}
+
+.feed-up-next .feed-up-next-item:hover .feed-up-next-info strong {
+  color: #c4b5fd;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-up-next .feed-up-next-item,
+  .feed-up-next .feed-up-next-thumb img {
+    transition: none;
+  }
+
+  .feed-up-next .feed-up-next-item:hover {
+    transform: none;
+  }
+}
+
+/* ===== FEED - MOBILE UP NEXT ===== */
+
+@media (max-width: 640px) {
+
+  .feed-watch-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feed-watch-main,
+  .feed-up-next {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .feed-up-next-item {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .feed-up-next-thumb {
+    width: 110px;
+    min-width: 0;
+    aspect-ratio: 16 / 9;
+  }
+
+  .feed-up-next-info {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .feed-up-next-info strong,
+  .feed-up-next-info span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+.chart-dates span {
+  font-size: 12px;
+}
+
+/* ===== MATCHES - CATEGORY BADGES ===== */
+
+.matches-history-game .matches-game-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.matches-history-game .matches-category-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  line-height: 1.2;
+}
+
+.matches-category-badge.competitive {
+  color: #b49aff;
+  background: rgba(124, 84, 255, 0.14);
+  border: 1px solid rgba(124, 84, 255, 0.4);
+}
+
+.matches-category-badge.casual {
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+/* GAME ACCOUNTS - DISCONNECT CONFIRMATION */
+
+.account-disconnect-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(3, 7, 16, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.account-disconnect-modal {
+  width: 100%;
+  max-width: 460px;
+  padding: 30px;
+
+  background: #121827;
+  border: 1px solid #364058;
+  border-radius: 16px;
+
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+
+.account-disconnect-icon {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 18px;
+
+  background: rgba(255, 101, 123, 0.12);
+  border-radius: 12px;
+
+  color: #ff7185;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.account-disconnect-modal h2 {
+  margin: 0 0 12px;
+
+  color: #f5f6ff;
+  font-size: 23px;
+}
+
+.account-disconnect-modal p {
+  color: #a6b2ce;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.account-disconnect-modal p strong {
+  color: #ffffff;
+}
+
+.account-disconnect-info {
+  padding: 13px 15px;
+
+  background: rgba(124, 92, 255, 0.07);
+  border: 1px solid rgba(124, 92, 255, 0.2);
+  border-radius: 9px;
+}
+
+.account-disconnect-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  margin-top: 25px;
+}
+
+.account-disconnect-actions button {
+  padding: 11px 17px;
+
+  border-radius: 8px;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.account-disconnect-cancel {
+  background: #202a3d;
+  border: 1px solid #36435b;
+  color: #dce3f5;
+}
+
+.account-disconnect-confirm {
+  background: #dc354e;
+  border: 1px solid #ed5268;
+  color: #ffffff;
+}
+
+.account-disconnect-confirm:hover:not(:disabled) {
+  background: #f04460;
+}
+
+.account-disconnect-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* GAME ACCOUNTS - DISCONNECT BUTTON */
+
+.account-disconnect-button {
+  padding: 10px 16px;
+
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(255, 101, 123, 0.45);
+  border-radius: 8px;
+
+  color: #ff7185;
+
+  font: inherit;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-disconnect-button:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.20);
+  border-color: #ff7185;
+  color: #ff9aaa;
+}
+
+.account-disconnect-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* GAME ACCOUNTS - MODAL SPACING */
+
+.account-disconnect-modal h2 {
+  margin-bottom: 20px;
+}
+
+.account-disconnect-modal > p:not(.account-disconnect-info) {
+  margin: 0 0 20px;
+  line-height: 1.7;
+}
+
+.account-disconnect-modal .account-disconnect-info {
+  margin: 0;
+  padding: 17px 19px;
+  line-height: 1.8;
+}
+
+.account-disconnect-actions {
+  margin-top: 30px;
+  gap: 12px;
+}
+/* Creator Studio - Edit Clip Cancel Button */
+
+.clip-edit-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  min-height: 48px;
+  padding: 12px 20px;
+
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.clip-edit-cancel:hover:not(:disabled) {
+  background: #293548;
+  border-color: #475569;
+}
+
+.clip-edit-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+/* Creator Studio - Fix horizontal overflow from hidden file input */
+
+.video-editor-panel input.video-editor-hidden-file {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  max-width: 1px !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0;
+
+  opacity: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+
+
 
 
 

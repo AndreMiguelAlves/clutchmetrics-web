@@ -1164,8 +1164,8 @@ export default function Home() {
                                         <div className="chart-dates">
                                             {evolution.map((point) => (
                                                 <span key={point.matchId}>
-          {formatChartDate(point.playedAt)}
-        </span>
+                                          {formatChartDate(point.playedAt)}
+                                        </span>
                                             ))}
                                         </div>
                                     </>

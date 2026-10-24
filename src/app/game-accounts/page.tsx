@@ -13,6 +13,7 @@ interface GameAccountResponse {
     externalId: string | null;
     region: string | null;
     platform: string | null;
+    connected: boolean;
 }
 
 const supportedGames = [
@@ -33,6 +34,25 @@ const supportedGames = [
     },
 ];
 
+const regionOptions: Record<string, string[]> = {
+    LEAGUE_OF_LEGENDS: [
+        "EUW", "EUNE", "NA", "KR", "BR",
+        "LAN", "LAS", "JP", "OCE", "TR"
+    ],
+    VALORANT: [
+        "EU", "NA", "AP", "KR", "BR", "LATAM"
+    ],
+    CS2: [
+        "EU", "NA", "SA", "ASIA", "OCE"
+    ],
+};
+
+const platformOptions: Record<string, string[]> = {
+    LEAGUE_OF_LEGENDS: ["PC"],
+    VALORANT: ["PC", "PS5", "XBOX"],
+    CS2: ["PC"],
+};
+
 export default function GameAccountsPage() {
     const router = useRouter();
 
@@ -43,6 +63,8 @@ export default function GameAccountsPage() {
         useState(true);
     const [connectingGame, setConnectingGame] =
         useState<string | null>(null);
+    const [editingAccountId, setEditingAccountId] =
+        useState<number | null>(null);
 
     const [nickname, setNickname] = useState("");
     const [externalId, setExternalId] = useState("");
@@ -51,6 +73,14 @@ export default function GameAccountsPage() {
 
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState("");
+    const [disconnectAccountId, setDisconnectAccountId] =
+        useState<number | null>(null);
+
+    const [updatingConnection, setUpdatingConnection] =
+        useState(false);
+
+    const [connectionError, setConnectionError] =
+        useState("");
 
     useEffect(() => {
         async function loadAccounts() {
@@ -94,11 +124,25 @@ export default function GameAccountsPage() {
 
     function openConnectForm(gameCode: string) {
         setConnectingGame(gameCode);
+        setEditingAccountId(null);
 
         setNickname("");
         setExternalId("");
         setRegion("");
-        setPlatform("");
+        setPlatform("PC");
+        setFormError("");
+
+    }
+
+    function openEditForm(account: GameAccountResponse) {
+        setConnectingGame(account.gameCode);
+        setEditingAccountId(account.id);
+
+        setNickname(account.nickname);
+        setExternalId(account.externalId ?? "");
+        setRegion(account.region ?? "");
+        setPlatform(account.platform ?? "PC");
+
         setFormError("");
     }
 
@@ -112,22 +156,25 @@ export default function GameAccountsPage() {
         setFormError("");
 
         try {
-            const response = await authenticatedFetch(
-                "http://localhost:8080/api/game-accounts",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        gameCode,
-                        nickname,
-                        externalId: externalId || null,
-                        region: region || null,
-                        platform: platform || null,
-                    }),
-                }
-            );
+            const isEditing = editingAccountId !== null;
+
+            const url = isEditing
+                ? `http://localhost:8080/api/game-accounts/${editingAccountId}`
+                : "http://localhost:8080/api/game-accounts";
+
+            const response = await authenticatedFetch(url, {
+                method: isEditing ? "PUT" : "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    ...(!isEditing ? { gameCode } : {}),
+                    nickname: nickname.trim(),
+                    externalId: externalId.trim() || null,
+                    region: region || null,
+                    platform: platform || null,
+                }),
+            });
 
             if (!response.ok) {
                 const errorData = await response
@@ -140,15 +187,22 @@ export default function GameAccountsPage() {
                 );
             }
 
-            const newAccount: GameAccountResponse =
+            const savedAccount: GameAccountResponse =
                 await response.json();
 
-            setAccounts((current) => [
-                ...current,
-                newAccount,
-            ]);
+            setAccounts((current) =>
+                isEditing
+                    ? current.map((account) =>
+                        account.id === savedAccount.id
+                            ? savedAccount
+                            : account
+                    )
+                    : [...current, savedAccount]
+            );
 
             setConnectingGame(null);
+            setEditingAccountId(null);
+
             setNickname("");
             setExternalId("");
             setRegion("");
@@ -177,6 +231,120 @@ export default function GameAccountsPage() {
         }
     }
 
+    async function handleDisconnect() {
+        if (disconnectAccountId === null || updatingConnection) {
+            return;
+        }
+
+        setUpdatingConnection(true);
+        setConnectionError("");
+
+        try {
+            const response = await authenticatedFetch(
+                `http://localhost:8080/api/game-accounts/${disconnectAccountId}/disconnect`,
+                {
+                    method: "PUT",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Could not disconnect the account.");
+            }
+
+            const updatedAccount: GameAccountResponse =
+                await response.json();
+
+            setAccounts((current) =>
+                current.map((account) =>
+                    account.id === updatedAccount.id
+                        ? updatedAccount
+                        : account
+                )
+            );
+
+            setDisconnectAccountId(null);
+
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (
+                    error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN"
+                )
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setConnectionError(
+                error instanceof Error
+                    ? error.message
+                    : "Could not disconnect the account."
+            );
+
+        } finally {
+            setUpdatingConnection(false);
+        }
+    }
+
+    async function handleReconnect(accountId: number) {
+        if (updatingConnection) {
+            return;
+        }
+
+        setUpdatingConnection(true);
+        setConnectionError("");
+
+        try {
+            const response = await authenticatedFetch(
+                `http://localhost:8080/api/game-accounts/${accountId}/reconnect`,
+                {
+                    method: "PUT",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Could not reconnect the account.");
+            }
+
+            const updatedAccount: GameAccountResponse =
+                await response.json();
+
+            setAccounts((current) =>
+                current.map((account) =>
+                    account.id === updatedAccount.id
+                        ? updatedAccount
+                        : account
+                )
+            );
+
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (
+                    error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN"
+                )
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setConnectionError(
+                error instanceof Error
+                    ? error.message
+                    : "Could not reconnect the account."
+            );
+
+        } finally {
+            setUpdatingConnection(false);
+        }
+    }
+
     return (
         <AppShell title="Game Accounts">
             <div className="accounts-page-container">
@@ -192,6 +360,12 @@ export default function GameAccountsPage() {
                         Connect and manage your competitive game accounts.
                     </p>
                 </header>
+
+                {connectionError && (
+                    <p className="connect-form-error">
+                        {connectionError}
+                    </p>
+                )}
 
                 {loading ? (
                     <div className="matches-empty">
@@ -232,28 +406,65 @@ export default function GameAccountsPage() {
                                             <strong>{game.name}</strong>
 
                                             <span>
-                        {account
+                        {account && account.connected !== false
                             ? account.nickname
                             : "Not connected"}
                       </span>
                                         </div>
                                     </div>
-                                    {account ? (
-                                        <div className="account-page-details">
-                                            <div>
-                                                <span>Region</span>
-                                                <strong>
-                                                    {account.region ?? "—"}
-                                                </strong>
+                                    {account && account.connected === false ? (
+                                        <div className="account-connect-area">
+        <span className="account-not-connected">
+            Match history preserved
+        </span>
+
+                                            <button
+                                                type="button"
+                                                className="connect-account-button"
+                                                disabled={updatingConnection}
+                                                onClick={() => handleReconnect(account.id)}
+                                            >
+                                                {updatingConnection
+                                                    ? "Reconnecting..."
+                                                    : "Reconnect account"}
+                                            </button>
+                                        </div>
+                                    ) : account && editingAccountId !== account.id ? (
+                                        <>
+                                            <div className="account-page-details">
+                                                <div>
+                                                    <span>Region</span>
+                                                    <strong>{account.region ?? "—"}</strong>
+                                                </div>
+
+                                                <div>
+                                                    <span>Platform</span>
+                                                    <strong>{account.platform ?? "—"}</strong>
+                                                </div>
                                             </div>
 
-                                            <div>
-                                                <span>Platform</span>
-                                                <strong>
-                                                    {account.platform ?? "—"}
-                                                </strong>
+                                            <div className="connect-form-actions">
+                                                <button
+                                                    type="button"
+                                                    className="account-disconnect-button"
+                                                    disabled={updatingConnection}
+                                                    onClick={() => {
+                                                        setConnectionError("");
+                                                        setDisconnectAccountId(account.id);
+                                                    }}
+                                                >
+                                                    Disconnect
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="connect-account-button"
+                                                    onClick={() => openEditForm(account)}
+                                                >
+                                                    Edit account
+                                                </button>
                                             </div>
-                                        </div>
+                                        </>
                                     ) : connectingGame === game.code ? (
                                         <div className="connect-account-form">
                                             <div className="connect-form-grid">
@@ -275,23 +486,37 @@ export default function GameAccountsPage() {
                                                     }
                                                 />
 
-                                                <input
-                                                    type="text"
-                                                    placeholder="Region (EUW, EU, NA...)"
+                                                <select
                                                     value={region}
-                                                    onChange={(event) =>
-                                                        setRegion(event.target.value)
-                                                    }
-                                                />
+                                                    onChange={(event) => setRegion(event.target.value)}
+                                                    aria-label="Region"
+                                                >
+                                                    <option value="" disabled>
+                                                        Select region
+                                                    </option>
 
-                                                <input
-                                                    type="text"
-                                                    placeholder="Platform (PC...)"
+                                                    {regionOptions[game.code].map((option) => (
+                                                        <option key={option} value={option}>
+                                                            {option}
+                                                        </option>
+                                                    ))}
+                                                </select>
+
+                                                <select
                                                     value={platform}
-                                                    onChange={(event) =>
-                                                        setPlatform(event.target.value)
-                                                    }
-                                                />
+                                                    onChange={(event) => setPlatform(event.target.value)}
+                                                    aria-label="Platform"
+                                                >
+                                                    <option value="" disabled>
+                                                        Select platform
+                                                    </option>
+
+                                                    {platformOptions[game.code].map((option) => (
+                                                        <option key={option} value={option}>
+                                                            {option}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
 
                                             {formError && (
@@ -304,7 +529,11 @@ export default function GameAccountsPage() {
                                                 <button
                                                     type="button"
                                                     className="connect-cancel-button"
-                                                    onClick={() => setConnectingGame(null)}
+                                                    onClick={() => {
+                                                        setConnectingGame(null);
+                                                        setEditingAccountId(null);
+                                                        setFormError("");
+                                                    }}
                                                 >
                                                     Cancel
                                                 </button>
@@ -315,7 +544,11 @@ export default function GameAccountsPage() {
                                                     disabled={saving}
                                                     onClick={() => handleConnect(game.code)}
                                                 >
-                                                    {saving ? "Connecting..." : "Save account"}
+                                                    {saving
+                                                        ? "Saving..."
+                                                        : editingAccountId !== null
+                                                            ? "Save changes"
+                                                            : "Save account"}
                                                 </button>
                                             </div>
                                         </div>
@@ -339,6 +572,71 @@ export default function GameAccountsPage() {
                     </div>
                 )}
             </div>
+            {disconnectAccountId !== null && (
+                <div className="account-disconnect-overlay">
+                    <div
+                        className="account-disconnect-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="account-disconnect-title"
+                    >
+                        <div className="account-disconnect-icon">
+                            !
+                        </div>
+
+                        <h2 id="account-disconnect-title">
+                            Disconnect game account?
+                        </h2>
+
+                        <p>
+                            Are you sure you want to disconnect{" "}
+                            <strong>
+                                {accounts.find(
+                                    (account) =>
+                                        account.id === disconnectAccountId
+                                )?.gameName}
+                            </strong>
+                            ?
+                        </p>
+
+                        <p className="account-disconnect-info">
+                            Your match history and statistics will be preserved.
+                            You can reconnect this account at any time.
+                        </p>
+
+                        {connectionError && (
+                            <p className="connect-form-error">
+                                {connectionError}
+                            </p>
+                        )}
+
+                        <div className="account-disconnect-actions">
+                            <button
+                                type="button"
+                                className="account-disconnect-cancel"
+                                disabled={updatingConnection}
+                                onClick={() => {
+                                    setDisconnectAccountId(null);
+                                    setConnectionError("");
+                                }}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                className="account-disconnect-confirm"
+                                disabled={updatingConnection}
+                                onClick={handleDisconnect}
+                            >
+                                {updatingConnection
+                                    ? "Disconnecting..."
+                                    : "Confirm disconnect"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppShell>
     );
 }

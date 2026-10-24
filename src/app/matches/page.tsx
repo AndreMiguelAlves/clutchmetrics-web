@@ -13,6 +13,7 @@ interface MatchResponse {
     nickname: string;
     externalMatchId: string;
     result: string;
+    category?: "COMPETITIVE" | "CASUAL" | "UNKNOWN" | null;
     playedAt: string;
     durationSeconds: number;
     kills: number;
@@ -34,6 +35,8 @@ export default function MatchesPage() {
         useState("ALL");
 
     const [selectedResult, setSelectedResult] =
+        useState("ALL");
+    const [selectedCategory, setSelectedCategory] =
         useState("ALL");
 
     useEffect(() => {
@@ -92,6 +95,13 @@ export default function MatchesPage() {
         loadMatches();
     }, [router, selectedGame, selectedResult]);
 
+    const filteredMatches = matches.filter((match) => {
+        return (
+            selectedCategory === "ALL" ||
+            (match.category ?? "UNKNOWN") === selectedCategory
+        );
+    });
+
     function formatDate(value: string) {
         return new Date(value).toLocaleString(
             "en-GB",
@@ -117,7 +127,7 @@ export default function MatchesPage() {
                     <h1>Matches</h1>
 
                     <p>
-                        Your complete competitive match history.
+                        Explore your match history, results and performance across all games.
                     </p>
                 </header>
 
@@ -175,19 +185,38 @@ export default function MatchesPage() {
                             </option>
                         </select>
                     </div>
+
+                    <div>
+                        <label htmlFor="matches-category">
+                            Category
+                        </label>
+
+                        <select
+                            id="matches-category"
+                            value={selectedCategory}
+                            onChange={(event) =>
+                                setSelectedCategory(event.target.value)
+                            }
+                        >
+                            <option value="ALL">All categories</option>
+                            <option value="COMPETITIVE">Competitive</option>
+                            <option value="CASUAL">Casual</option>
+                        </select>
+                    </div>
+
                 </div>
 
                 {loading ? (
                     <div className="matches-empty">
                         Loading matches...
                     </div>
-                ) : matches.length === 0 ? (
+                ) : filteredMatches.length === 0 ? (
                     <div className="matches-empty">
-                        No matches recorded yet.
+                        No matches found for the selected filters.
                     </div>
                 ) : (
                     <div className="matches-history">
-                        {matches.map((match) => (
+                        {filteredMatches.map((match) => (
                             <article
                                 className="matches-history-card"
                                 key={match.matchId}
@@ -213,15 +242,28 @@ export default function MatchesPage() {
                                         )}
                                     </div>
 
-                                    <div>
-                                        <strong>
-                                            {match.gameName}
-                                        </strong>
 
-                                        <span>
-                      {match.nickname}
-                    </span>
+                                    <div>
+                                        <strong>{match.gameName}</strong>
+
+                                        <div className="matches-game-meta">
+                                            <span>{match.nickname}</span>
+
+                                            {(match.category === "COMPETITIVE" ||
+                                                match.category === "CASUAL") && (
+                                                <span
+                                                    className={`matches-category-badge ${
+                                                        match.category === "COMPETITIVE"
+                                                            ? "competitive"
+                                                            : "casual"
+                                                    }`}
+                                                >
+                {match.category}
+            </span>
+                                            )}
+                                        </div>
                                     </div>
+
                                 </div>
 
                                 <div>

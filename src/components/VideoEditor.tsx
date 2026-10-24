@@ -357,7 +357,7 @@ export default function VideoEditor({
                 new Event("clutchmetrics:video-updated")
             );
             setSuccessMessage(
-                "Your vertical video is ready! You can preview or download it."
+                "Your vertical video is ready! You can preview, download, or create a clip for the Feed."
             );
 
         } catch (error) {

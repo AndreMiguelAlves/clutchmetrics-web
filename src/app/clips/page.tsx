@@ -110,6 +110,17 @@ export default function ClipsPage() {
     const [actionClipId, setActionClipId] =
         useState<number | null>(null);
     const [clipToDelete, setClipToDelete] = useState<ClipResponse | null>(null);
+    const [clipToEdit, setClipToEdit] =
+        useState<ClipResponse | null>(null);
+
+    const [editTitle, setEditTitle] =
+        useState("");
+
+    const [editDescription, setEditDescription] =
+        useState("");
+
+    const [savingEdit, setSavingEdit] =
+        useState(false);
 
     const [clipToChangeVisibility, setClipToChangeVisibility] =
         useState<{
@@ -344,6 +355,86 @@ export default function ClipsPage() {
         };
     }, [router]);
 
+    function openEditClip(clip: ClipResponse) {
+        setClipToEdit(clip);
+        setEditTitle(clip.title);
+        setEditDescription(clip.description ?? "");
+        setError("");
+        setSuccess("");
+    }
+
+    async function handleUpdateClip() {
+        if (!clipToEdit) return;
+
+        if (!editTitle.trim()) {
+            setError("Clip title is required.");
+            return;
+        }
+
+        setSavingEdit(true);
+        setError("");
+        setSuccess("");
+
+        try {
+            const response = await authenticatedFetch(
+                `http://localhost:8080/api/clips/${clipToEdit.id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        title: editTitle.trim(),
+                        description: editDescription.trim() || null,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response
+                    .json()
+                    .catch(() => null);
+
+                throw new Error(
+                    errorData?.message ?? "Could not update the clip."
+                );
+            }
+
+            const updatedClip: ClipResponse = await response.json();
+
+            setClips((current) =>
+                current.map((clip) =>
+                    clip.id === updatedClip.id ? updatedClip : clip
+                )
+            );
+
+            setClipToEdit(null);
+            setSuccess("Clip updated successfully.");
+
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (
+                    error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN"
+                )
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Could not update the clip."
+            );
+
+        } finally {
+            setSavingEdit(false);
+        }
+    }
 
     async function handleCreateClip() {
 
@@ -1008,7 +1099,27 @@ export default function ClipsPage() {
                     </span>
                                     </div>
                                     <div className="clip-actions">
+                                        <button
+                                            type="button"
+                                            className="clip-export-button"
+                                            disabled={actionClipId === clip.id || savingEdit}
+                                            onClick={() => openEditClip(clip)}
+                                        >
+                                            Edit
+                                        </button>
 
+                                        {clip.status === "UPLOADED" && (
+                                            <button
+                                                type="button"
+                                                className="clip-primary-action"
+                                                disabled={actionClipId === clip.id}
+                                                onClick={() => void handleClipAction(clip.id, "process")}
+                                            >
+                                                {actionClipId === clip.id
+                                                    ? "Preparing..."
+                                                    : "Prepare for Feed"}
+                                            </button>
+                                        )}
 
                                         {clip.status === "READY" && clip.videoUrl && (
                                             <button
@@ -1098,6 +1209,105 @@ export default function ClipsPage() {
 
             </div>
 
+            {/* JANELA DE EDIÇÃO DO CLIP */}
+            {clipToEdit && (
+                <div className="clip-export-overlay">
+                    <div
+                        className="clip-export-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="edit-clip-title"
+                    >
+                        <div className="clip-export-header">
+                            <h2 id="edit-clip-title">Edit Clip</h2>
+
+                            <button
+                                type="button"
+                                className="clip-export-close"
+                                disabled={savingEdit}
+                                onClick={() => setClipToEdit(null)}
+                                aria-label="Close edit window"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div style={{ padding: "24px" }}>
+                            <p style={{ marginBottom: "24px" }}>
+                                Update your clip details without changing
+                                the video or its interactions.
+                            </p>
+
+                            <div className="profile-field">
+                                <label htmlFor="edit-clip-name">
+                                    Title
+                                </label>
+
+                                <input
+                                    id="edit-clip-name"
+                                    type="text"
+                                    value={editTitle}
+                                    onChange={(event) =>
+                                        setEditTitle(event.target.value)
+                                    }
+                                    placeholder="Clip title"
+                                    disabled={savingEdit}
+                                />
+                            </div>
+
+                            <div
+                                className="profile-field"
+                                style={{ marginTop: "20px" }}
+                            >
+                                <label htmlFor="edit-clip-description">
+                                    Description
+                                </label>
+
+                                <textarea
+                                    id="edit-clip-description"
+                                    rows={4}
+                                    value={editDescription}
+                                    onChange={(event) =>
+                                        setEditDescription(event.target.value)
+                                    }
+                                    placeholder="Describe your highlight..."
+                                    disabled={savingEdit}
+                                />
+                            </div>
+
+                            <div
+                                className="clip-form-actions"
+                                style={{
+                                    marginTop: "28px",
+                                    display: "flex",
+                                    justifyContent: "flex-end",
+                                    gap: "12px",
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    className="clip-edit-cancel"
+                                    disabled={savingEdit}
+                                    onClick={() => setClipToEdit(null)}
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="profile-save-button"
+                                    disabled={savingEdit || !editTitle.trim()}
+                                    onClick={() => void handleUpdateClip()}
+                                >
+                                    {savingEdit
+                                        ? "Saving..."
+                                        : "Save changes"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* JANELA DE PREVIEW DO CLIP */}
             {clipToPreview && (

@@ -41,6 +41,8 @@ export default function MyEditedVideos({
 
     const [selectedVideoForClip, setSelectedVideoForClip] =
         useState<number | null>(null);
+    const [clipVideoVersion, setClipVideoVersion] =
+        useState<"ORIGINAL" | "PROCESSED">("PROCESSED");
 
     const [clipTitle, setClipTitle] = useState("");
     const [clipDescription, setClipDescription] = useState("");
@@ -264,8 +266,13 @@ export default function MyEditedVideos({
         setClipCreateSuccess("");
 
         try {
+            const endpoint =
+                clipVideoVersion === "ORIGINAL"
+                    ? "http://localhost:8080/api/clips/from-original"
+                    : "http://localhost:8080/api/clips/from-video";
+
             const response = await authenticatedFetch(
-                "http://localhost:8080/api/clips/from-video",
+                endpoint,
                 {
                     method: "POST",
                     headers: {
@@ -519,18 +526,49 @@ export default function MyEditedVideos({
                                     <button
                                         type="button"
                                         className="profile-save-button my-video-use-button"
-                                        onClick={() =>
-                                            setSelectedVideoForClip((current) =>
-                                                current === video.id ? null : video.id
-                                            )
-                                        }
+                                        onClick={() => {
+                                            if (
+                                                selectedVideoForClip === video.id &&
+                                                clipVideoVersion === "PROCESSED"
+                                            ) {
+                                                setSelectedVideoForClip(null);
+                                            } else {
+                                                setClipVideoVersion("PROCESSED");
+                                                setSelectedVideoForClip(video.id);
+                                                setClipCreateError("");
+                                            }
+                                        }}
                                     >
-                                        {selectedVideoForClip === video.id
+                                        {selectedVideoForClip === video.id &&
+                                        clipVideoVersion === "PROCESSED"
                                             ? "Cancel"
                                             : "Create Feed Clip"}
                                     </button>
                                 )}
+                                {video.id !== activeEditorVideoId && (
+                                <button
+                                    type="button"
+                                    className="profile-save-button my-video-preview-button"
+                                    onClick={() => {
+                                        if (
+                                            selectedVideoForClip === video.id &&
+                                            clipVideoVersion === "ORIGINAL"
+                                        ) {
+                                            setSelectedVideoForClip(null);
+                                        } else {
+                                            setClipVideoVersion("ORIGINAL");
+                                            setSelectedVideoForClip(video.id);
+                                            setClipCreateError("");
+                                        }
+                                    }}
+                                >
 
+                                    {selectedVideoForClip === video.id &&
+                                    clipVideoVersion === "ORIGINAL"
+                                        ? "Cancel"
+                                        : "Keep Original"}
+                                </button>
+                                )}
 
                                 <button
                                     type="button"
@@ -583,7 +621,11 @@ export default function MyEditedVideos({
                             {selectedVideoForClip === video.id && (
                                 <div className="my-video-create-panel">
 
-                                    <strong>Create Feed Clip</strong>
+                                    <strong>
+                                        {clipVideoVersion === "ORIGINAL"
+                                            ? "Keep Original"
+                                            : "Create Feed Clip"}
+                                    </strong>
 
                                     <p>
                                         Selected video:{" "}
@@ -679,8 +721,10 @@ export default function MyEditedVideos({
                                         onClick={() => void handleCreateClip(video.id)}
                                     >
                                         {creatingClip
-                                            ? "Creating Feed Clip..."
-                                            : "Create Feed Clip"}
+                                            ? "Creating..."
+                                            : clipVideoVersion === "ORIGINAL"
+                                                ? "Create Original Clip"
+                                                : "Create Feed Clip"}
                                     </button>
 
                                 </div>

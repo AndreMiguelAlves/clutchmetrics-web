@@ -26,6 +26,7 @@ interface ClipResponse {
     durationSeconds: number | null;
     status: "UPLOADED" | "PROCESSING" | "READY" | "FAILED";
     visibility: "PUBLIC" | "PRIVATE";
+    videoVersion: "ORIGINAL" | "PROCESSED" | "TRIMMED" | null;
     createdAt: string;
     updatedAt: string;
     likeCount?: number;
@@ -66,6 +67,26 @@ function isProcessedClipVideo(
         return false;
     }
 }
+
+
+function isVerticalClip(clip: ClipResponse): boolean {
+    // Keep Original e Trim Original mantêm o formato original
+    if (
+        clip.videoVersion === "ORIGINAL" ||
+        clip.videoVersion === "TRIMMED"
+    ) {
+        return false;
+    }
+
+    // Clips convertidos pelo FFmpeg para vertical
+    if (clip.videoVersion === "PROCESSED") {
+        return true;
+    }
+
+    // Compatibilidade com clips antigos
+    return isProcessedClipVideo(clip.videoUrl);
+}
+
 
 
 
@@ -1571,7 +1592,7 @@ export default function ClipsPage() {
 
 
                         <div className="clip-export-formats">
-                            {isProcessedClipVideo(clipToExport.videoUrl) ? (
+                            {isVerticalClip(clipToExport) ? (
                                 <div
                                     className="clip-export-format clip-export-format-selected"
                                     style={{ gridColumn: "1 / -1" }}
@@ -1587,14 +1608,20 @@ export default function ClipsPage() {
                                     style={{ gridColumn: "1 / -1" }}
                                 >
                                     <span className="clip-export-format-icon">▣</span>
-                                    <strong>Original · MP4</strong>
-                                    <span>Keep original quality</span>
+                                    <strong>
+                                        {clipToExport.videoVersion === "TRIMMED"
+                                            ? "Trimmed · MP4"
+                                            : "Original · MP4"}
+                                    </strong>
+                                    <span>
+                                    {clipToExport.videoVersion === "TRIMMED"
+                                        ? "Trimmed · Original aspect ratio"
+                                        : "Keep original quality"}
+                                </span>
                                     <small>Ready to download</small>
                                 </div>
                             )}
                         </div>
-
-
 
                         {isProcessedClipVideo(clipToExport.videoUrl) ? (
                             <button
@@ -1610,9 +1637,15 @@ export default function ClipsPage() {
                                     void handleDownloadProcessedClip(clipToExport)
                                 }
                             >
+
                                 {downloadingClipId === clipToExport.id
                                     ? "Exporting..."
-                                    : "↓ Download vertical MP4"}
+                                    : isVerticalClip(clipToExport)
+                                        ? "↓ Download vertical MP4"
+                                        : clipToExport.videoVersion === "TRIMMED"
+                                            ? "↓ Download trimmed MP4"
+                                            : "↓ Download original MP4"}
+
                             </button>
                         ) : (
                             <a
@@ -1624,12 +1657,17 @@ export default function ClipsPage() {
                             </a>
                         )}
 
-
                         <p className="clip-export-note">
-                            {isProcessedClipVideo(clipToExport.videoUrl)
+
+                            {isVerticalClip(clipToExport)
                                 ? "Your vertical MP4 is ready to share on TikTok, Instagram Reels or YouTube Shorts."
-                                : "Download your original MP4 file without additional processing."}
+                                : clipToExport.videoVersion === "TRIMMED"
+                                    ? "Download your trimmed MP4, keeping the original aspect ratio and resolution."
+                                    : "Download your original MP4 file without additional processing."}
+
                         </p>
+
+
                     </div>
                 </div>
             )}

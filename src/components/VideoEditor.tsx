@@ -37,6 +37,22 @@ export default function VideoEditor({
 
     const [uploadedVideo, setUploadedVideo] =
         useState<VideoUploadResponse | null>(null);
+    const [showOriginalForm, setShowOriginalForm] =
+        useState(false);
+    const [originalClipGameCode, setOriginalClipGameCode] = useState("");
+    const [originalClipTitle, setOriginalClipTitle] = useState("");
+    const [originalClipDescription, setOriginalClipDescription] = useState("");
+
+    const [showTrimForm, setShowTrimForm] = useState(false);
+
+    const [trimClipGameCode, setTrimClipGameCode] = useState("");
+    const [trimClipTitle, setTrimClipTitle] = useState("");
+    const [trimClipDescription, setTrimClipDescription] = useState("");
+
+    const [creatingTrimClip, setCreatingTrimClip] = useState(false);
+
+
+    const [creatingOriginalClip, setCreatingOriginalClip] = useState(false);
 
 
     const [startSeconds, setStartSeconds] = useState("0");
@@ -207,6 +223,7 @@ export default function VideoEditor({
         setError("");
         setSuccessMessage("");
         setUploadedVideo(null);
+        setShowOriginalForm(false);
         onActiveVideoChange(null);
         setProcessedVideo(null);
         setSelectedFile(null);
@@ -270,7 +287,7 @@ export default function VideoEditor({
                 new Event("clutchmetrics:video-updated")
             );
             setSuccessMessage(
-                "Video uploaded successfully. Click Process Video to create your highlight."
+                "Video uploaded successfully! Choose Process Video to create a vertical highlight or Keep Original to preserve your video."
             );
 
         } catch (error) {
@@ -294,6 +311,189 @@ export default function VideoEditor({
             );
         } finally {
             setUploading(false);
+        }
+    }
+
+    async function handleCreateOriginalClip() {
+        if (!uploadedVideo || creatingOriginalClip) {
+            return;
+        }
+
+        // Validar os campos obrigatórios
+        if (!originalClipGameCode) {
+            setError("Please select a game.");
+            return;
+        }
+
+        if (!originalClipTitle.trim()) {
+            setError("Please enter a clip title.");
+            return;
+        }
+
+        setCreatingOriginalClip(true);
+        setError("");
+        setSuccessMessage("");
+
+        try {
+            const response = await authenticatedFetch(
+                "http://localhost:8080/api/clips/from-original",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        videoAssetId: uploadedVideo.id,
+                        gameCode: originalClipGameCode,
+                        title: originalClipTitle.trim(),
+                        description: originalClipDescription.trim(),
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Could not create the original clip."
+                );
+            }
+
+            // Atualizar My Clips automaticamente
+            window.dispatchEvent(
+                new Event("clutchmetrics:clip-created")
+            );
+
+            setSuccessMessage(
+                "Your original clip is ready! You can find it in My Clips."
+            );
+
+            // Fechar e limpar o formulário
+            setShowOriginalForm(false);
+            setOriginalClipGameCode("");
+            setOriginalClipTitle("");
+            setOriginalClipDescription("");
+
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (
+                    error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN"
+                )
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "An unexpected error occurred."
+            );
+
+        } finally {
+            setCreatingOriginalClip(false);
+        }
+    }
+
+
+    async function handleCreateTrimmedClip() {
+        if (!uploadedVideo || creatingTrimClip) {
+            return;
+        }
+
+        const start = Number(startSeconds);
+        const end = Number(endSeconds);
+
+        // Validar os dados do formulário
+        if (!trimClipGameCode || !trimClipTitle.trim()) {
+            setError("Please select a game and enter a clip title.");
+            return;
+        }
+
+        // Validar o intervalo de corte
+        if (
+            startSeconds.trim() === "" ||
+            endSeconds.trim() === "" ||
+            !Number.isInteger(start) ||
+            !Number.isInteger(end) ||
+            start < 0 ||
+            end <= start ||
+            end - start > 60
+        ) {
+            setError(
+                "Select a valid interval of up to 60 seconds."
+            );
+            return;
+        }
+
+        setCreatingTrimClip(true);
+        setError("");
+        setSuccessMessage("");
+
+        try {
+            const response = await authenticatedFetch(
+                "http://localhost:8080/api/clips/from-trimmed",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        videoAssetId: uploadedVideo.id,
+                        gameCode: trimClipGameCode,
+                        title: trimClipTitle.trim(),
+                        description: trimClipDescription.trim(),
+                        startSeconds: start,
+                        endSeconds: end,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Could not create the trimmed clip. Check the selected interval."
+                );
+            }
+
+            // Atualizar a lista My Clips
+            window.dispatchEvent(
+                new Event("clutchmetrics:clip-created")
+            );
+
+            setSuccessMessage(
+                "Trimmed clip created successfully! Find it in My Clips."
+            );
+
+            // Limpar e fechar o formulário
+            setShowTrimForm(false);
+            setTrimClipGameCode("");
+            setTrimClipTitle("");
+            setTrimClipDescription("");
+
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                (
+                    error.message === "SESSION_EXPIRED" ||
+                    error.message === "NO_ACCESS_TOKEN"
+                )
+            ) {
+                router.replace("/login");
+                return;
+            }
+
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "An unexpected error occurred."
+            );
+
+        } finally {
+            setCreatingTrimClip(false);
         }
     }
 
@@ -625,7 +825,10 @@ export default function VideoEditor({
                         Your browser does not support video playback.
                     </video>
 
-                    <div className="video-editor-timeline-actions">
+                    <div
+                        className="video-editor-timeline-actions"
+                        style={{ display: showOriginalForm ? "none" : undefined }}
+                    >
                         <button
                             type="button"
                             className="profile-save-button"
@@ -661,7 +864,10 @@ export default function VideoEditor({
                     </div>
 
 
-                    <div className="video-editor-selected-range">
+                    <div
+                        className="video-editor-selected-range"
+                        style={{ display: showOriginalForm ? "none" : undefined }}
+                    >
     <span>
         Start: <strong>{startSeconds}s</strong>
     </span>
@@ -683,7 +889,10 @@ export default function VideoEditor({
 
             {uploadedVideo && (
                 <div className="clip-form-grid">
-                    <div className="profile-field">
+                    <div
+                        className="profile-field"
+                        style={{ display: showOriginalForm ? "none" : undefined }}
+                    >
                         <label htmlFor="video-start">
                             Start (seconds)
                         </label>
@@ -701,7 +910,10 @@ export default function VideoEditor({
                         />
                     </div>
 
-                    <div className="profile-field">
+                    <div
+                        className="profile-field"
+                        style={{ display: showOriginalForm ? "none" : undefined }}
+                    >
                         <label htmlFor="video-end">
                             End (seconds)
                         </label>
@@ -719,16 +931,276 @@ export default function VideoEditor({
                         />
                     </div>
 
-                    <div className="clip-form-full">
+                    <div
+                        className="clip-form-full"
+                        style={{
+                            display: "flex",
+                            gap: "12px",
+                            flexWrap: "wrap",
+                        }}
+                    >
                         <button
                             type="button"
                             className="profile-save-button"
+                            style={{
+                                display: showOriginalForm || showTrimForm ? "none" : undefined
+                            }}
                             disabled={processing || !!processedVideo}
                             onClick={() => void handleProcessVideo()}
                         >
                             {processing
                                 ? "Processing video..."
                                 : "Process Video"}
+                        </button>
+
+                        <button
+                            type="button"
+                            className="profile-save-button my-video-preview-button"
+                            disabled={processing || uploading}
+                            onClick={() => {
+                                setShowOriginalForm(current => !current);
+                                setShowTrimForm(false);
+                            }}
+                        >
+                            {showOriginalForm
+                                ? "Cancel Keep Original"
+                                : "Keep Original"}
+                        </button>
+
+                        <button
+                            type="button"
+                            className="profile-save-button"
+                            disabled={creatingTrimClip}
+                            onClick={() => {
+                                setShowTrimForm(!showTrimForm);
+                                setShowOriginalForm(false);
+                                setError("");
+                                setSuccessMessage("");
+                            }}
+                        >
+                            {showTrimForm
+                                ? "Cancel Trim Original"
+                                : "Trim Original"}
+                        </button>
+
+                    </div>
+                </div>
+            )}
+
+
+            {showOriginalForm && uploadedVideo && (
+                <div
+                    className="my-video-create-panel"
+                    style={{ marginTop: "20px" }}
+                >
+                    <h3>Keep Original</h3>
+
+                    <p>
+                        Create a clip using your original MP4.
+                        No trimming or video conversion required.
+                    </p>
+
+                    <div
+                        className="clip-form-grid"
+                        style={{ marginTop: "20px" }}
+                    >
+                        <div className="profile-field">
+                            <label htmlFor="original-clip-game">
+                                Game
+                            </label>
+
+                            <select
+                                id="original-clip-game"
+                                value={originalClipGameCode}
+                                onChange={(event) =>
+                                    setOriginalClipGameCode(event.target.value)
+                                }
+                            >
+                                <option value="" disabled>
+                                    Select a game
+                                </option>
+
+                                <option value="LEAGUE_OF_LEGENDS">
+                                    League of Legends
+                                </option>
+
+                                <option value="VALORANT">
+                                    Valorant
+                                </option>
+
+                                <option value="CS2">
+                                    Counter-Strike 2
+                                </option>
+                            </select>
+                        </div>
+
+                        <div className="profile-field">
+                            <label htmlFor="original-clip-title">
+                                Clip title
+                            </label>
+
+                            <input
+                                id="original-clip-title"
+                                type="text"
+                                maxLength={150}
+                                placeholder="e.g. My best Valorant clutch"
+                                value={originalClipTitle}
+                                onChange={(event) =>
+                                    setOriginalClipTitle(event.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div className="profile-field clip-form-full">
+                            <label htmlFor="original-clip-description">
+                                Description (optional)
+                            </label>
+
+                            <textarea
+                                id="original-clip-description"
+                                rows={3}
+                                maxLength={1000}
+                                placeholder="Describe your highlight..."
+                                value={originalClipDescription}
+                                onChange={(event) =>
+                                    setOriginalClipDescription(event.target.value)
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        className="profile-save-button"
+                        style={{ marginTop: "20px" }}
+                        disabled={
+                            creatingOriginalClip ||
+                            !originalClipGameCode ||
+                            !originalClipTitle.trim()
+                        }
+                        onClick={() =>
+                            void handleCreateOriginalClip()
+                        }
+                    >
+                        {creatingOriginalClip
+                            ? "Creating Original Clip..."
+                            : "Create Original Clip"}
+                    </button>
+                </div>
+            )}
+
+
+
+            {uploadedVideo && showTrimForm && (
+                <div
+                    className="clip-form-grid"
+                    style={{
+                        marginTop: "20px",
+                        padding: "20px",
+                        border: "1px solid rgba(139, 92, 246, 0.35)",
+                        borderRadius: "14px",
+                        backgroundColor: "rgba(35, 25, 65, 0.35)",
+                    }}
+                >
+                    <div className="clip-form-full">
+                        <h3 style={{ margin: "0 0 10px" }}>
+                            Trim Original
+                        </h3>
+
+                        <p
+                            style={{
+                                margin: "0",
+                                color: "#a5b4d4",
+                                fontSize: "14px",
+                            }}
+                        >
+                            Cut your gameplay while keeping the original
+                            aspect ratio and resolution.
+                        </p>
+                    </div>
+
+                    <div className="profile-field">
+                        <label htmlFor="trim-original-game">
+                            Game
+                        </label>
+
+                        <select
+                            id="trim-original-game"
+                            value={trimClipGameCode}
+                            onChange={(event) =>
+                                setTrimClipGameCode(event.target.value)
+                            }
+                        >
+                            <option value="" disabled>
+                                Select a game
+                            </option>
+                            <option value="LEAGUE_OF_LEGENDS">
+                                League of Legends
+                            </option>
+                            <option value="VALORANT">
+                                Valorant
+                            </option>
+                            <option value="CS2">
+                                Counter-Strike 2
+                            </option>
+                        </select>
+                    </div>
+
+                    <div className="profile-field">
+                        <label htmlFor="trim-original-title">
+                            Clip title
+                        </label>
+
+                        <input
+                            id="trim-original-title"
+                            type="text"
+                            maxLength={150}
+                            placeholder="Enter a clip title"
+                            value={trimClipTitle}
+                            onChange={(event) =>
+                                setTrimClipTitle(event.target.value)
+                            }
+                        />
+                    </div>
+
+                    <div className="profile-field clip-form-full">
+                        <label htmlFor="trim-original-description">
+                            Description (optional)
+                        </label>
+
+                        <textarea
+                            id="trim-original-description"
+                            maxLength={1000}
+                            rows={3}
+                            placeholder="Describe your highlight (optional)"
+                            value={trimClipDescription}
+                            onChange={(event) =>
+                                setTrimClipDescription(event.target.value)
+                            }
+                        />
+                    </div>
+
+                    <div className="clip-form-full">
+                        <p>
+                            Selected interval: {startSeconds}s to {endSeconds}s
+                        </p>
+
+                        <p>
+                            The clip will keep the source video's
+                            aspect ratio and resolution.
+                        </p>
+
+                        <button
+                            type="button"
+                            className="profile-save-button"
+                            disabled={creatingTrimClip}
+                            onClick={() =>
+                                void handleCreateTrimmedClip()
+                            }
+                        >
+                            {creatingTrimClip
+                                ? "Creating trimmed clip..."
+                                : "Create Trimmed Clip"}
                         </button>
                     </div>
                 </div>

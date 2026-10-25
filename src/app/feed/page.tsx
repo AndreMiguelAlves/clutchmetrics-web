@@ -94,20 +94,38 @@ export default function FeedPage() {
         { label: "CS2", value: "Counter-Strike 2" },
     ];
 
-    const filteredClips = clips.filter((clip) => {
-        const search = searchTerm.trim().toLowerCase();
 
-        const matchesSearch =
-            clip.title.toLowerCase().includes(search) ||
-            (clip.gameName ?? "").toLowerCase().includes(search) ||
-            (clip.description ?? "").toLowerCase().includes(search);
+    const search = searchTerm.trim().toLowerCase();
 
-        const matchesGame =
-            selectedGame === "ALL" ||
-            clip.gameName === selectedGame;
+    const filteredClips = clips
+        .filter((clip) => {
+            const matchesSearch =
+                clip.title.toLowerCase().includes(search) ||
+                (clip.gameName ?? "").toLowerCase().includes(search) ||
+                (clip.description ?? "").toLowerCase().includes(search);
 
-        return matchesSearch && matchesGame;
-    });
+            const matchesGame =
+                selectedGame === "ALL" ||
+                clip.gameName === selectedGame;
+
+            return matchesSearch && matchesGame;
+        })
+        .sort((a, b) => {
+            if (!search) {
+                return 0;
+            }
+
+            const aTitleMatches = a.title
+                .toLowerCase()
+                .includes(search);
+
+            const bTitleMatches = b.title
+                .toLowerCase()
+                .includes(search);
+
+            return Number(bTitleMatches) - Number(aTitleMatches);
+        });
+
 
     const selectedClip =
         filteredClips.find(
@@ -535,7 +553,10 @@ export default function FeedPage() {
                             type="search"
                             placeholder="Search clips or games..."
                             value={searchTerm}
-                            onChange={(event) => setSearchTerm(event.target.value)}
+                            onChange={(event) => {
+                                setSearchTerm(event.target.value);
+                                setSelectedClipId(null);
+                            }}
                         />
                     </div>
 

@@ -79,9 +79,11 @@ export default function AdminUsersPage() {
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
             enabled: !user.enabled,
           }),
+
         }
       );
 
@@ -135,7 +137,9 @@ export default function AdminUsersPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            roles: [role],
+            roles: role === "ADMIN"
+                ? ["USER", "ADMIN"]
+                : ["USER"],
           }),
         }
       );
@@ -192,9 +196,15 @@ export default function AdminUsersPage() {
         user.username.toLowerCase().includes(search) ||
         user.email.toLowerCase().includes(search);
 
+
     const matchesRole =
         roleFilter === "ALL" ||
-        user.roles.includes(roleFilter);
+        (roleFilter === "ADMIN" &&
+            user.roles.includes("ADMIN")) ||
+        (roleFilter === "USER" &&
+            user.roles.includes("USER") &&
+            !user.roles.includes("ADMIN"));
+
 
     const matchesStatus =
         statusFilter === "ALL" ||

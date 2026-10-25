@@ -8868,6 +8868,50 @@ button.clip-delete-button:disabled {
 }
 
 
+/* AUDIT LOGS - PAGINATION */
+
+.audit-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px 24px;
+  border-top: 1px solid #263142;
+  color: #91a0bd;
+  font-size: 14px;
+}
+
+.audit-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.audit-pagination-controls button {
+  background: #151c2b;
+  color: #f5f7ff;
+  border: 1px solid #303b54;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.audit-pagination-controls button:hover:not(:disabled) {
+  border-color: #7855ff;
+  color: #a994ff;
+}
+
+.audit-pagination-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+
+
 
 
 

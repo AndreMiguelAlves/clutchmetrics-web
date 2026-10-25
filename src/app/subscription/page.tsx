@@ -41,7 +41,7 @@ export default function SubscriptionPage() {
 
                 if (!response.ok) {
                     throw new Error(
-                        "Não foi possível carregar a subscrição."
+                        "Could not load your subscription."
                     );
                 }
 
@@ -480,7 +480,7 @@ export default function SubscriptionPage() {
                                         {error
                                             ? "Something went wrong"
                                             : subscription?.planCode === "PREMIUM"
-                                                ? "Welcome to Premium!"
+                                                ? "Subscription upgraded!"
                                                 : "Switched to Free"}
                                     </strong>
 
@@ -495,7 +495,7 @@ export default function SubscriptionPage() {
                                         {error
                                             ? error
                                             : subscription?.planCode === "PREMIUM"
-                                                ? "Unlimited analytics is now available."
+                                                ? "Your plan has been successfully upgraded to Premium."
                                                 : "Your Free plan is now active."}
                                     </p>
                                 </div>

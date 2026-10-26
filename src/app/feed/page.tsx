@@ -85,6 +85,8 @@ export default function FeedPage() {
     const [reportError, setReportError] = useState("");
     const [reportSuccess, setReportSuccess] = useState("");
     const [shareSuccess, setShareSuccess] = useState("");
+    const [authorAvatars, setAuthorAvatars] =
+        useState<Record<number, string | null>>({});
 
 
     const feedGames = [
@@ -135,6 +137,46 @@ export default function FeedPage() {
     const upNextClips = filteredClips.filter(
         (clip) => clip.id !== selectedClip?.id
     );
+
+    useEffect(() => {
+        const authorId = selectedClip?.authorId;
+
+        if (authorId == null) {
+            return;
+        }
+
+        let cancelled = false;
+
+        async function loadAuthorAvatar() {
+            try {
+                const response = await fetch(
+                    `http://localhost:8080/api/players/${authorId}`
+                );
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data: { avatarUrl: string | null } =
+                    await response.json();
+
+                if (!cancelled) {
+                    setAuthorAvatars((current) => ({
+                        ...current,
+                        [authorId]: data.avatarUrl,
+                    }));
+                }
+            } catch (error) {
+                console.error("Could not load author avatar.", error);
+            }
+        }
+
+        loadAuthorAvatar();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedClip?.authorId]);
 
     useEffect(() => {
         async function loadFeed() {
@@ -700,14 +742,26 @@ export default function FeedPage() {
                                         className="feed-author"
                                         aria-label={`View ${clip.authorUsername}'s profile`}
                                     >
+
                                         <div className="feed-author-avatar">
                                             {(clip.authorUsername?.trim().charAt(0) || "P").toUpperCase()}
+
+                                            {authorAvatars[clip.authorId] && (
+                                                <img
+                                                    src={authorAvatars[clip.authorId] ?? ""}
+                                                    alt=""
+                                                    onError={(event) => {
+                                                        event.currentTarget.style.display = "none";
+                                                    }}
+                                                />
+                                            )}
                                         </div>
 
+
                                         <div className="feed-author-info">
-    <span className="feed-author-caption">
-      Uploaded by
-    </span>
+                                        <span className="feed-author-caption">
+                                          Uploaded by
+                                        </span>
 
                                             <strong className="feed-author-name">
                                                 {clip.authorUsername || "Unknown player"}
@@ -899,10 +953,10 @@ export default function FeedPage() {
                                                                         </svg>
 
                                                                         <span style={{ fontSize: "14px" }}>
-        {deletingCommentId === comment.id
-            ? "Deleting..."
-            : "Delete"}
-    </span>
+                                                                            {deletingCommentId === comment.id
+                                                                                ? "Deleting..."
+                                                                                : "Delete"}
+                                                                        </span>
                                                                     </button>
 
                                                                 </div>

@@ -94,7 +94,7 @@ export default function GameAccountsPage() {
 
                 if (!response.ok) {
                     throw new Error(
-                        "Não foi possível carregar as contas."
+                        "Could not load game accounts."
                     );
                 }
 
@@ -171,7 +171,7 @@ export default function GameAccountsPage() {
                     ...(!isEditing ? { gameCode } : {}),
                     nickname: nickname.trim(),
                     externalId: externalId.trim() || null,
-                    region: region || null,
+                    region: gameCode === "CS2" ? null : (region || null),
                     platform: platform || null,
                 }),
             });
@@ -431,17 +431,21 @@ export default function GameAccountsPage() {
                                         </div>
                                     ) : account && editingAccountId !== account.id ? (
                                         <>
+
                                             <div className="account-page-details">
-                                                <div>
-                                                    <span>Region</span>
-                                                    <strong>{account.region ?? "—"}</strong>
-                                                </div>
+                                                {game.code !== "CS2" && (
+                                                    <div>
+                                                        <span>Region</span>
+                                                        <strong>{account.region ?? "—"}</strong>
+                                                    </div>
+                                                )}
 
                                                 <div>
                                                     <span>Platform</span>
                                                     <strong>{account.platform ?? "—"}</strong>
                                                 </div>
                                             </div>
+
 
                                             <div className="connect-form-actions">
                                                 <button
@@ -479,28 +483,32 @@ export default function GameAccountsPage() {
 
                                                 <input
                                                     type="text"
-                                                    placeholder="External ID"
+                                                    placeholder={game.code === "CS2" ? "Steam ID" : "External ID"}
                                                     value={externalId}
                                                     onChange={(event) =>
                                                         setExternalId(event.target.value)
                                                     }
                                                 />
 
-                                                <select
-                                                    value={region}
-                                                    onChange={(event) => setRegion(event.target.value)}
-                                                    aria-label="Region"
-                                                >
-                                                    <option value="" disabled>
-                                                        Select region
-                                                    </option>
 
-                                                    {regionOptions[game.code].map((option) => (
-                                                        <option key={option} value={option}>
-                                                            {option}
+                                                {game.code !== "CS2" && (
+                                                    <select
+                                                        value={region}
+                                                        onChange={(event) => setRegion(event.target.value)}
+                                                        aria-label="Region"
+                                                    >
+                                                        <option value="" disabled>
+                                                            Select region
                                                         </option>
-                                                    ))}
-                                                </select>
+
+                                                        {regionOptions[game.code].map((option) => (
+                                                            <option key={option} value={option}>
+                                                                {option}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                )}
+
 
                                                 <select
                                                     value={platform}

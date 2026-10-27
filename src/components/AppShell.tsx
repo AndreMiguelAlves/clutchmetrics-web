@@ -63,6 +63,7 @@ const menuItems = [
 ];
 
 
+
 const communityItems = [
   {
     label: "Feed",
@@ -70,11 +71,17 @@ const communityItems = [
     icon: Radio,
   },
   {
+    label: "Discover Players",
+    href: "/players",
+    icon: Users,
+  },
+  {
     label: "Challenges",
     href: "/challenges",
     icon: Trophy,
   },
 ];
+
 
 
 const accountItems = [
@@ -226,7 +233,7 @@ export default function AppShell({
 
           <div>
             <strong>ClutchMetrics</strong>
-            <span>PERFORMANCE HUB</span>
+            <span>GAMING HUB</span>
           </div>
         </Link>
 

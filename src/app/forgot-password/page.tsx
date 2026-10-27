@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, useState } from "react";
 
 export default function ForgotPasswordPage() {
@@ -68,13 +69,19 @@ export default function ForgotPasswordPage() {
         <main className="auth-page">
             <section className="auth-card">
                 <div className="auth-brand">
-                    <div className="auth-logo">
-                        CM
-                    </div>
+
+                    <Image
+                        src="/clutchmetrics-icon.png"
+                        alt="ClutchMetrics"
+                        width={44}
+                        height={44}
+                        className="auth-logo-image"
+                    />
+
 
                     <div>
                         <strong>ClutchMetrics</strong>
-                        <span>PERFORMANCE HUB</span>
+                        <span>GAMING HUB</span>
                     </div>
                 </div>
 

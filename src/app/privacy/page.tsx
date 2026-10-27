@@ -20,7 +20,7 @@ export default function PrivacyPage() {
 
                     <div>
                         <strong>ClutchMetrics</strong>
-                        <span>PERFORMANCE HUB</span>
+                        <span>GAMING HUB</span>
                     </div>
                 </Link>
 
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
                         community content.
                     </p>
 
-                    <small>Last updated: October 20, 2026</small>
+                    <small>Last updated: October 27, 2026</small>
                 </div>
 
                 <section className={styles.section}>
@@ -71,23 +71,40 @@ export default function PrivacyPage() {
                     </p>
                 </section>
 
+
                 <section className={styles.section}>
                     <h2>2. Information We Process</h2>
 
                     <p>
-                        ClutchMetrics processes account
-                        information such as usernames,
-                        email addresses and securely
-                        hashed passwords.
+                        ClutchMetrics processes account information,
+                        including usernames, email addresses and
+                        securely hashed passwords. Authentication
+                        and verification tokens are also used to
+                        support account security.
                     </p>
 
                     <p>
-                        The application also stores gaming
-                        profiles, match statistics, clip
-                        information and community interactions,
-                        including likes, comments and reports.
+                        Players can provide profile information,
+                        including display names, biographies,
+                        profile pictures and links to external
+                        social media accounts.
+                    </p>
+
+                    <p>
+                        The platform stores information related
+                        to connected game accounts, match history,
+                        performance statistics, video uploads,
+                        clips and challenge participation.
+                    </p>
+
+                    <p>
+                        Community information includes published
+                        content, likes, comments, content reports
+                        and relationships between followers
+                        and followed players.
                     </p>
                 </section>
+
 
                 <section className={styles.section}>
                     <h2>3. How Information Is Used</h2>
@@ -128,46 +145,87 @@ export default function PrivacyPage() {
                     </p>
                 </section>
 
+
                 <section className={styles.section}>
                     <h2>5. Public Community Content</h2>
 
                     <p>
-                        Published clips, usernames and
-                        public player profiles may be
-                        visible to other users.
+                        ClutchMetrics allows players to create public
+                        profiles that may display their usernames,
+                        display names, biographies, profile pictures
+                        and social media links.
                     </p>
 
                     <p>
-                        Users should avoid including
-                        personal or sensitive information
-                        in publicly shared content.
+                        Public player profiles may also display
+                        published clips, follower counts and
+                        following counts. Signed-in users can
+                        discover other players, follow them and
+                        view their Followers and Following lists.
+                    </p>
+
+                    <p>
+                        Content shared through the community Feed,
+                        including published clips and comments,
+                        may be visible to other users.
+                        Users should avoid sharing sensitive
+                        or personal information publicly.
+                    </p>
+
+                    <p>
+                        Private account information, such as
+                        email addresses and stored password
+                        hashes, is not displayed on public
+                        player profiles.
                     </p>
                 </section>
+
+
 
                 <section className={styles.section}>
-                    <h2>6. External Content</h2>
+                    <h2>6. External Content and Social Links</h2>
 
                     <p>
-                        Some clips may reference videos
-                        hosted on external websites.
-                        External platforms operate under
-                        their own privacy policies
-                        and terms of use.
+                        Some clips may reference videos hosted on
+                        external platforms. Players can also add
+                        links to supported social media accounts,
+                        including YouTube, Twitch, TikTok and Instagram.
+                    </p>
+
+                    <p>
+                        When users open external links, they leave
+                        ClutchMetrics and access third-party services.
+                        These platforms operate under their own
+                        privacy policies and terms of use.
                     </p>
                 </section>
+
+
 
                 <section className={styles.section}>
                     <h2>7. Data Retention and Changes</h2>
 
                     <p>
-                        lutchMetrics stores information needed to provide account, gaming and community features. Data retention practices and account management options may evolve as the platform develops. This policy may be updated to reflect those changes
+                        ClutchMetrics stores account information,
+                        gaming data and community content to support
+                        the features available within the platform.
                     </p>
 
                     <p>
-                        This policy may be updated as
-                        the platform develops.
+                        Data retention and account management
+                        procedures may change as the project evolves.
+                        Users can contact the project team through
+                        the Help Center with questions about their
+                        personal information.
+                    </p>
+
+                    <p>
+                        This Privacy Policy may be updated to
+                        reflect changes to the platform and
+                        its data processing practices.
                     </p>
                 </section>
+
 
                 <section className={styles.section}>
                     <h2>8. Questions and Support</h2>

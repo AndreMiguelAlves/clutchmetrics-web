@@ -5,23 +5,40 @@ import styles from "./about.module.css";
 import SiteFooter from "@/components/SiteFooter";
 import AuthAwareContent from "@/components/AuthAwareContent";
 
+
 const features = [
     {
         title: "Performance Analytics",
         description:
-            "Track your KDA, win rate, match history and performance trends.",
+            "Analyze match history, KDA, win rate and performance trends. Use filters to explore your results across supported games.",
     },
     {
-        title: "Clips & Community",
+        title: "Creator Studio",
         description:
-            "Manage your gaming highlights, publish clips and interact with other players.",
+            "Upload videos, create and edit clips, export your highlights and publish them to the community Feed.",
+    },
+    {
+        title: "Player Community",
+        description:
+            "Discover players, customize your public profile, follow other gamers and interact through clips, likes and comments.",
     },
     {
         title: "Sponsored Challenges",
         description:
-            "Join gaming challenges, track your progress and complete objectives.",
+            "Explore gaming challenges, join available competitions, track your progress and complete objectives.",
+    },
+    {
+        title: "Game Accounts",
+        description:
+            "Connect and manage your supported game accounts, configure their regions and manage connection status.",
+    },
+    {
+        title: "Free & Premium",
+        description:
+            "Start with Free features or unlock Premium benefits, including 1080p video exports and All Time performance analytics.",
     },
 ];
+
 
 const games = [
     {
@@ -53,7 +70,7 @@ export default function AboutPage() {
 
                     <div>
                         <strong>ClutchMetrics</strong>
-                        <span>PERFORMANCE HUB</span>
+                        <span>GAMING HUB</span>
                     </div>
                 </Link>
 
@@ -124,8 +141,8 @@ export default function AboutPage() {
                     <h2>Supported Games</h2>
 
                     <p className={styles.sectionDescription}>
-                        Explore your performance and gaming
-                        content across four competitive titles.
+                        Explore your performance and gaming content
+                        across three supported competitive titles.
                     </p>
 
                     <div className={styles.gameGrid}>

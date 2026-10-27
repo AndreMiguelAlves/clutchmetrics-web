@@ -20,7 +20,7 @@ export default function AboutPage() {
 
                     <div>
                         <strong>ClutchMetrics</strong>
-                        <span>PERFORMANCE HUB</span>
+                        <span>GAMING HUB</span>
                     </div>
                 </Link>
 
@@ -53,7 +53,7 @@ export default function AboutPage() {
                         platform and its community features.
                     </p>
 
-                    <small>Last updated: October 20, 2026</small>
+                    <small>Last updated: October 27, 2026</small>
                 </div>
 
                 <section className={styles.section}>
@@ -80,23 +80,34 @@ export default function AboutPage() {
                     </p>
                 </section>
 
+
                 <section className={styles.section}>
-                    <h2>3. Community Content</h2>
+                    <h2>3. Community Content and Player Profiles</h2>
 
                     <p>
-                        Users are responsible for the clips,
-                        comments and other content they share.
-                        Only content they are authorized to use
-                        should be submitted.
+                        ClutchMetrics allows users to customize public
+                        player profiles, upload avatars, add social media
+                        links, follow other players, publish clips and
+                        interact through likes and comments.
                     </p>
 
                     <p>
-                        Content that violates community rules,
-                        infringes third-party rights or contains
-                        inappropriate material may be reviewed
-                        and removed by administrators.
+                        Users are responsible for the information and
+                        content they share, including profile details,
+                        uploaded videos, comments and external links.
+                        Users should only submit content they are
+                        authorized to use and should avoid sharing
+                        sensitive personal information publicly.
+                    </p>
+
+                    <p>
+                        Content that violates community rules, infringes
+                        third-party rights or contains inappropriate
+                        material may be reported, reviewed and removed
+                        by administrators.
                     </p>
                 </section>
+
 
                 <section className={styles.section}>
                     <h2>4. Free and Premium Plans</h2>

@@ -59,7 +59,7 @@ function LoginContent() {
             if (!response.ok) {
                 setError(
                     data.message ||
-                    "Não foi possível iniciar sessão."
+                    "Unable to sign in. Please check your credentials."
                 );
 
                 setPassword("");
@@ -82,7 +82,7 @@ function LoginContent() {
             router.push("/dashboard");
         } catch {
             setError(
-                "Não foi possível comunicar com o servidor."
+                "Unable to connect to the server. Please try again later."
             );
         } finally {
             setLoading(false);
@@ -110,14 +110,14 @@ function LoginContent() {
 
                     <div>
                         <strong>ClutchMetrics</strong>
-                        <span>Performance Hub</span>
+                        <span>Gaming Hub</span>
                     </div>
                 </header>
 
                 <div className={styles.heroContent}>
-          <span className={styles.heroEyebrow}>
-            ESPORTS PERFORMANCE PLATFORM
-          </span>
+                  <span className={styles.heroEyebrow}>
+                    ANALYTICS • VIDEO CREATION • COMMUNITY
+                    </span>
 
                     <h1>
                         Your game.
@@ -127,41 +127,37 @@ function LoginContent() {
                         <span>Your edge.</span>
                     </h1>
 
+
                     <p>
-                        Turn every match into insight. Track your
-                        performance, understand your playstyle and improve
-                        with data that matters.
+                        Track your performance, create and edit gaming
+                        clips, and share your best moments with a community
+                        built for players. All in one platform.
                     </p>
+
+
 
 
                     <div className={styles.heroStats}>
                         <div>
-                            <span>PERFORMANCE</span>
+                            <span>ANALYTICS</span>
                             <strong>KDA</strong>
-                            <small>Match statistics & insights</small>
+                            <small>Track your performance</small>
+                        </div>
+
+                        <div>
+                            <span>CREATOR STUDIO</span>
+                            <strong>Clips</strong>
+                            <small>Edit & share highlights</small>
                         </div>
 
                         <div>
                             <span>COMMUNITY</span>
-                            <strong>Clips</strong>
-                            <small>Share your highlights</small>
-                        </div>
-
-                        <div>
-                            <span>GAMES</span>
-                            <strong>4</strong>
-                            <small>Competitive titles supported</small>
+                            <strong>Feed</strong>
+                            <small>Discover & follow players</small>
                         </div>
                     </div>
 
-                </div>
 
-                <div className={styles.visualFooter}>
-                    <ShieldCheck size={17} />
-
-                    <span>
-            Secure authentication powered by ClutchMetrics
-          </span>
                 </div>
             </section>
 
@@ -182,8 +178,8 @@ function LoginContent() {
                         <h2>Sign in to ClutchMetrics</h2>
 
                         <p>
-                            Continue where you left off and check your latest
-                            performance.
+                            Pick up where you left off. Track your stats,
+                            create highlights and connect with fellow players.
                         </p>
                     </div>
 
@@ -323,6 +319,13 @@ function LoginContent() {
                         Create an account
                     </button>
 
+                    <Link
+                        href="/about#features"
+                        className={styles.exploreFeaturesLink}
+                    >
+                        Explore Features
+                        <ArrowRight size={16} />
+                    </Link>
 
                     <p className={styles.terms}>
                         By continuing, you agree to the ClutchMetrics{" "}

@@ -96,7 +96,7 @@ export default function RegisterPage() {
 
                     <div>
                         <strong>ClutchMetrics</strong>
-                        <span>PERFORMANCE HUB</span>
+                        <span>GAMING HUB</span>
                     </div>
                 </div>
 
@@ -106,11 +106,13 @@ export default function RegisterPage() {
           </span>
 
                     <h1>Join ClutchMetrics</h1>
-
+                    
                     <p>
-                        Create your competitive profile and
-                        start tracking your performance.
+                        Create your player profile, track your performance,
+                        share gaming highlights and connect with the
+                        ClutchMetrics community.
                     </p>
+
                 </div>
 
                 {error && (

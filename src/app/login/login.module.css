@@ -795,3 +795,28 @@
     color: #9eafcc;
 }
 
+/* LOGIN - EXPLORE FEATURES */
+
+.exploreFeaturesLink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    width: fit-content;
+    margin: 18px auto 0;
+
+    color: #ad98ff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+
+    transition: color 0.2s ease;
+}
+
+.exploreFeaturesLink:hover {
+    color: #d0c4ff;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+

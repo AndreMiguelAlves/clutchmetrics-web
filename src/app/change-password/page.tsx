@@ -1,3 +1,4 @@
+
 "use client";
 
 import { FormEvent, useState } from "react";
@@ -5,14 +6,9 @@ import AppShell from "@/components/AppShell";
 import { authenticatedFetch } from "@/lib/api";
 
 export default function ChangePasswordPage() {
-    const [currentPassword, setCurrentPassword] =
-        useState("");
-
-    const [newPassword, setNewPassword] =
-        useState("");
-
-    const [confirmPassword, setConfirmPassword] =
-        useState("");
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -62,7 +58,7 @@ export default function ChangePasswordPage() {
 
                 throw new Error(
                     errorData?.message ??
-                    "Could not change password."
+                    "Could not request a password change."
                 );
             }
 
@@ -70,20 +66,23 @@ export default function ChangePasswordPage() {
 
             setSuccess(
                 message ||
-                "Password changed successfully."
+                "A confirmation link has been sent to your email. " +
+                "Your password will only change after confirmation."
             );
 
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
+
         } catch (error) {
             console.error(error);
 
             setError(
                 error instanceof Error
                     ? error.message
-                    : "Could not change password."
+                    : "Could not request a password change."
             );
+
         } finally {
             setLoading(false);
         }
@@ -92,20 +91,24 @@ export default function ChangePasswordPage() {
     return (
         <AppShell title="Change Password">
             <div className="change-password-page">
+
                 <div className="change-password-header">
-          <span className="page-eyebrow">
-            ACCOUNT SECURITY
-          </span>
+                    <span className="page-eyebrow">
+                        ACCOUNT SECURITY
+                    </span>
 
                     <h1>Change password</h1>
 
                     <p>
-                        Update the password used to access
-                        your ClutchMetrics account.
+                        Request a password change for your
+                        ClutchMetrics account. You will need
+                        to confirm the change through your
+                        registered email address.
                     </p>
                 </div>
 
                 <div className="change-password-card">
+
                     {error && (
                         <div className="auth-error">
                             {error}
@@ -122,6 +125,7 @@ export default function ChangePasswordPage() {
                         className="auth-form"
                         onSubmit={handleSubmit}
                     >
+
                         <label>
                             Current password
 
@@ -183,9 +187,10 @@ export default function ChangePasswordPage() {
                             disabled={loading}
                         >
                             {loading
-                                ? "Updating..."
-                                : "Change Password"}
+                                ? "Sending..."
+                                : "Send Confirmation Email"}
                         </button>
+
                     </form>
                 </div>
             </div>

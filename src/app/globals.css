@@ -9458,6 +9458,269 @@ button.clip-delete-button:disabled {
   color: #ff7185;
 }
 
+/* =========================================
+   DISCOVER PLAYERS
+========================================= */
+
+.discover-players-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-bottom: 48px;
+}
+
+.discover-players-header {
+  margin-bottom: 30px;
+}
+
+.discover-players-header h1 {
+  margin: 8px 0 12px;
+  color: #f5f6ff;
+  font-size: 36px;
+  font-weight: 600;
+}
+
+.discover-players-header > p:last-child {
+  color: #93a5ca;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Main panel */
+
+.discover-players-panel {
+  padding: 30px;
+  border: 1px solid #27344e;
+  border-radius: 16px;
+  background: #101623;
+}
+
+/* Search */
+
+.discover-players-search {
+  margin-bottom: 32px;
+}
+
+.discover-players-search label {
+  display: block;
+  margin-bottom: 12px;
+  color: #f1f3ff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.discover-players-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.discover-players-search-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 15px 17px;
+  border: 1px solid #34415e;
+  border-radius: 10px;
+  outline: none;
+  background: #0b101b;
+  color: #f5f6ff;
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.discover-players-search-row input::placeholder {
+  color: #7484a4;
+}
+
+.discover-players-search-row input:focus {
+  border-color: #8267ff;
+  box-shadow: 0 0 0 3px rgba(130, 103, 255, 0.12);
+}
+
+.discover-players-search-row button {
+  padding: 14px 18px;
+  border: 1px solid #3a4661;
+  border-radius: 10px;
+  background: #1b2437;
+  color: #dce3ff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.discover-players-search-row button:hover {
+  background: #2a3650;
+}
+
+/* Results header */
+
+.discover-players-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.discover-players-results-header h2 {
+  margin: 0;
+  color: #f5f6ff;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.discover-players-results-header > span {
+  color: #899bbd;
+  font-size: 14px;
+}
+
+/* Player list */
+
+.discover-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.discover-player-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid #293650;
+  border-radius: 12px;
+  background: #192238;
+  text-decoration: none;
+  transition:
+          border-color 0.2s,
+          background 0.2s,
+          transform 0.2s;
+}
+
+.discover-player-card:hover {
+  transform: translateY(-2px);
+  border-color: #735bdf;
+  background: #202b46;
+}
+
+/* Avatar */
+
+.discover-player-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  overflow: hidden;
+  border: 2px solid #967dff;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7653ee, #4031a1);
+}
+
+.discover-player-avatar span {
+  color: #ffffff;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.discover-player-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Player information */
+
+.discover-player-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.discover-player-info strong {
+  overflow: hidden;
+  color: #f5f6ff;
+  font-size: 18px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-player-info > span {
+  overflow: hidden;
+  color: #9a82ff;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-player-action {
+  flex-shrink: 0;
+  color: #a994ff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.discover-player-card:hover .discover-player-action {
+  color: #cabdff;
+}
+
+/* Messages */
+
+.discover-players-message,
+.discover-players-error {
+  margin: 0;
+  padding: 30px 18px;
+  border: 1px dashed #34415e;
+  border-radius: 12px;
+  color: #96a6c5;
+  font-size: 15px;
+  text-align: center;
+}
+
+.discover-players-error {
+  border-color: #9e465a;
+  color: #ff9aaa;
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+  .discover-players-header h1 {
+    font-size: 29px;
+  }
+
+  .discover-players-panel {
+    padding: 18px;
+  }
+
+  .discover-player-card {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .discover-player-avatar {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .discover-player-info strong {
+    font-size: 16px;
+  }
+
+  .discover-player-action {
+    font-size: 12px;
+  }
+}
+
 
 
 

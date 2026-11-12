@@ -1024,6 +1024,7 @@ export default function AnalyticsPage() {
                                 </div>
                             </article>
 
+
                             <article className="analytics-panel">
                                 <p className="eyebrow">
                                     MATCH SUMMARY
@@ -1031,7 +1032,12 @@ export default function AnalyticsPage() {
 
                                 <h2>Results</h2>
 
-                                <div className="analytics-kda-grid">
+                                <div
+                                    className="analytics-kda-grid"
+                                    style={{
+                                        gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
+                                    }}
+                                >
                                     <div>
                                         <span>Total</span>
                                         <strong>
@@ -1047,6 +1053,13 @@ export default function AnalyticsPage() {
                                     </div>
 
                                     <div>
+                                        <span>Losses</span>
+                                        <strong>
+                                            {summary?.losses ?? "—"}
+                                        </strong>
+                                    </div>
+
+                                    <div>
                                         <span>Draws</span>
                                         <strong>
                                             {summary?.draws ?? "—"}
@@ -1054,6 +1067,7 @@ export default function AnalyticsPage() {
                                     </div>
                                 </div>
                             </article>
+
 
                         </section>
 
